@@ -40,7 +40,7 @@ class RBF01:
         "swish", "hard_swish", "soft_plus", "mish", "soft_sign", "tanh_shrink", "soft_shrink", "hard_shrink" }, default='sigmoid'
         Activation function for the hidden layer.
     """
-    def __init__(self, size_hidden=10, center_finder="kmean", sigmas=(1.0, )):
+    def __init__(self, size_hidden=10, center_finder="kmean", sigmas=(1.0, ), **kwargs):
         self.size_hidden = size_hidden
         self.center_finder = center_finder
         self.sigmas = sigmas
@@ -144,8 +144,8 @@ class RBF02(RBF01):
         "swish", "hard_swish", "soft_plus", "mish", "soft_sign", "tanh_shrink", "soft_shrink", "hard_shrink" }, default='sigmoid'
         Activation function for the hidden layer.
     """
-    def __init__(self, size_hidden=10, center_finder="random", sigmas=(1.0,), lamda=0.01):
-        super().__init__(size_hidden, center_finder, sigmas)
+    def __init__(self, size_hidden=10, center_finder="kmean", sigmas=(1.0,), lamda=0.01, **kwargs):
+        super().__init__(size_hidden, center_finder, sigmas, **kwargs)
         self.lamda = lamda
 
     def fit(self, X, y):
@@ -177,7 +177,7 @@ class BaseRbf(BaseEstimator):
     SUPPORTED_REG_METRICS = get_all_regression_metrics()
     CLS_OBJ_LOSSES = None
 
-    def __init__(self, regularization=False, size_hidden=10, center_finder="random", sigmas=(1.0, ), lamda=0.01):
+    def __init__(self, regularization=False, size_hidden=10, center_finder="kmean", sigmas=(1.0, ), lamda=0.01):
         super().__init__()
         self._net_class = RBF01
         if regularization:
@@ -403,7 +403,7 @@ class BaseMhaRbf(BaseRbf):
     SUPPORTED_CLS_OBJECTIVES = get_all_classification_metrics()
     SUPPORTED_REG_OBJECTIVES = get_all_regression_metrics()
 
-    def __init__(self, regularization=False, size_hidden=10, center_finder="random", sigmas=(1.0, ), lamda=0.01,
+    def __init__(self, regularization=False, size_hidden=10, center_finder="kmean", sigmas=(1.0, ), lamda=0.01,
                  obj_name=None, optimizer="BaseGA", optimizer_paras=None, verbose=True):
         super().__init__(regularization=regularization, size_hidden=size_hidden,
                          center_finder=center_finder, sigmas=sigmas, lamda=lamda)
