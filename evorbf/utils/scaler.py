@@ -11,61 +11,40 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler
 
 
-class TimeSeriesDifferencer:
-
-    def __init__(self, interval=1):
-        if interval < 1:
-            raise ValueError("Interval for differencing must be at least 1.")
-        self.interval = interval
-
-    def difference(self, X):
-        self.original_data = X.copy()
-        return np.array([X[i] - X[i - self.interval] for i in range(self.interval, len(X))])
-
-    def inverse_difference(self, diff_data):
-        if self.original_data is None:
-            raise ValueError("Original data is required for inversion.")
-        return np.array([diff_data[i - self.interval] + self.original_data[i - self.interval] for i in range(self.interval, len(self.original_data))])
-
-
-class FeatureEngineering:
-    def __init__(self):
+class ObjectiveScaler:
+    """
+    For label scaler in classification (binary and multiple classification)
+    """
+    def __init__(self, obj_name="sigmoid", ohe_scaler=None):
         """
-        Initialize the FeatureEngineering class
+        ohe_scaler: Need to be an instance of One-Hot-Encoder for softmax scaler (multiple classification problem)
         """
-        # Check if the threshold is a valid number
-        pass
+        self.obj_name = obj_name
+        self.ohe_scaler = ohe_scaler
 
-    def create_threshold_binary_features(self, X, threshold):
-        """
-        Perform feature engineering to add binary indicator columns for values below the threshold.
-        Add each new column right after the corresponding original column.
+    def transform(self, data):
+        if self.obj_name == "sigmoid" or self.obj_name == "self":
+            return data
+        elif self.obj_name == "hinge":
+            data = np.squeeze(np.array(data))
+            data[np.where(data == 0)] = -1
+            return data
+        elif self.obj_name == "softmax":
+            data = self.ohe_scaler.transform(np.reshape(data, (-1, 1)))
+            return data
 
-        Args:
-        X (numpy.ndarray): The input 2D matrix of shape (n_samples, n_features).
-        threshold (float): The threshold value for identifying low values.
-
-        Returns:
-        numpy.ndarray: The updated 2D matrix with binary indicator columns.
-        """
-        # Check if X is a NumPy array
-        if not isinstance(X, np.ndarray):
-            raise ValueError("Input X should be a NumPy array.")
-        # Check if the threshold is a valid number
-        if not (isinstance(threshold, int) or isinstance(threshold, float)):
-            raise ValueError("Threshold should be a numeric value.")
-
-        # Create a new matrix to hold the original and new columns
-        X_new = np.zeros((X.shape[0], X.shape[1] * 2))
-        # Iterate over each column in X
-        for idx in range(X.shape[1]):
-            feature_values = X[:, idx]
-            # Create a binary indicator column for values below the threshold
-            indicator_column = (feature_values < threshold).astype(int)
-            # Add the original column and indicator column to the new matrix
-            X_new[:, idx * 2] = feature_values
-            X_new[:, idx * 2 + 1] = indicator_column
-        return X_new
+    def inverse_transform(self, data):
+        if self.obj_name == "sigmoid":
+            data = np.squeeze(np.array(data))
+            data = np.rint(data).astype(int)
+        elif self.obj_name == "hinge":
+            data = np.squeeze(np.array(data))
+            data = np.ceil(data).astype(int)
+            data[np.where(data == -1)] = 0
+        elif self.obj_name == "softmax":
+            data = np.squeeze(np.array(data))
+            data = np.argmax(data, axis=1)
+        return data
 
 
 class Log1pScaler(BaseEstimator, TransformerMixin):
@@ -173,30 +152,44 @@ class SinhArcSinhScaler(BaseEstimator, TransformerMixin):
 
 class DataTransformer(BaseEstimator, TransformerMixin):
 
-    SUPPORTED_SCALERS = {"standard": StandardScaler(), "minmax": MinMaxScaler(), "max-abs": MaxAbsScaler(),
-                         "log1p": Log1pScaler(), "loge": LogeScaler(), "sqrt": SqrtScaler(),
-                         "sinh-arc-sinh": SinhArcSinhScaler(), "robust": RobustScaler(),
-                         "box-cox": BoxCoxScaler(), "yeo-johnson": YeoJohnsonScaler()}
+    SUPPORTED_SCALERS = {"standard": StandardScaler, "minmax": MinMaxScaler, "max-abs": MaxAbsScaler,
+                         "log1p": Log1pScaler, "loge": LogeScaler, "sqrt": SqrtScaler,
+                         "sinh-arc-sinh": SinhArcSinhScaler, "robust": RobustScaler,
+                         "box-cox": BoxCoxScaler, "yeo-johnson": YeoJohnsonScaler}
 
-    def __init__(self, scaling_methods=('standard', )):
+    def __init__(self, scaling_methods=('standard', ), list_dict_paras=None):
         if type(scaling_methods) is str:
+            if list_dict_paras is None:
+                self.list_dict_paras = [{}]
+            elif type(list_dict_paras) is dict:
+                self.list_dict_paras = [list_dict_paras]
+            else:
+                raise TypeError(f"You use only 1 scaling method, the list_dict_paras should be dict of parameter for that scaler.")
             self.scaling_methods = [scaling_methods]
         elif type(scaling_methods) in (tuple, list, np.ndarray):
+            if list_dict_paras is None:
+                self.list_dict_paras = [{}, ]*len(scaling_methods)
+            elif type(list_dict_paras) in (tuple, list, np.ndarray):
+                self.list_dict_paras = list(list_dict_paras)
+            else:
+                raise TypeError(f"Invalid type of list_dict_paras. Supported type are: tuple, list, or np.ndarray of parameter dict")
             self.scaling_methods = list(scaling_methods)
         else:
             raise TypeError(f"Invalid type of scaling_methods. Supported type are: str, tuple, list, or np.ndarray")
-        self.scalers = []
 
-    def _get_scaler(self, technique):
+        self.scalers = [self._get_scaler(technique, paras) for (technique, paras) in zip(self.scaling_methods, self.list_dict_paras)]
+
+    def _get_scaler(self, technique, paras):
         if technique in self.SUPPORTED_SCALERS.keys():
-            return self.SUPPORTED_SCALERS[technique]
+            if type(paras) is not dict:
+                paras = {}
+            return self.SUPPORTED_SCALERS[technique](**paras)
         else:
             raise ValueError(f"Invalid scaling technique. Supported techniques are {self.SUPPORTED_SCALERS.keys()}")
 
     def fit(self, X, y=None):
-        self.scalers = [self._get_scaler(technique) for technique in self.scaling_methods]
-        for scaler in self.scalers:
-            X = scaler.fit_transform(X)
+        for idx, _ in enumerate(self.scalers):
+            X = self.scalers[idx].fit_transform(X)
         return self
 
     def transform(self, X):
