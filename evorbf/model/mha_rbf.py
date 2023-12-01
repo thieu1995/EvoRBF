@@ -55,7 +55,7 @@ class MhaRbfRegressor(BaseMhaRbf, RegressorMixin):
     >>> print(pred)
     """
 
-    def __init__(self, regularization=False, size_hidden=10, center_finder="random", sigmas=(1.0, ), lamda=0.01,
+    def __init__(self, regularization=False, size_hidden=10, center_finder="kmean", sigmas=(1.0, ), lamda=0.01,
                  obj_name=None, optimizer="BaseGA", optimizer_paras=None, verbose=True, obj_weights=None):
         super().__init__(regularization=regularization, size_hidden=size_hidden, center_finder=center_finder, sigmas=sigmas,
                          lamda=lamda, obj_name=obj_name, optimizer=optimizer, optimizer_paras=optimizer_paras, verbose=verbose)
