@@ -7,7 +7,7 @@
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from evorbf.utils.scaler import DataTransformer
+from evorbf.helpers.scaler import DataTransformer
 from sklearn.model_selection import train_test_split
 
 

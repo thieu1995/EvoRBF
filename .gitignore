@@ -1,5 +1,5 @@
 evorbf/haha.py
-evorbf/utils/activation.py
+evorbf/helpers/activation.py
 evorbf/base_rbf_torch.py
 evorbf/model/standard_rbf.py
 .github/
