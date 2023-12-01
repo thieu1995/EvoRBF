@@ -44,7 +44,7 @@ class RBF01:
         self.size_hidden = size_hidden
         self.center_finder = center_finder
         self.sigmas = sigmas
-        self.centers, self.weights = None, None 
+        self.centers, self.weights, self.weights_shape = None, None, None
 
     @staticmethod
     def calculate_centers(X, method="kmean", n_clusters=5):
@@ -111,8 +111,13 @@ class RBF01:
     def update_parameters_by_solution(self, solution, X, y):
         if self.centers is None:
             self.centers = self.calculate_centers(X, self.center_finder, self.size_hidden)
+        if self.weights_shape is None:
+            if y.ndim == 1:
+                self.weights_shape = (self.size_hidden, 1)
+            else:
+                self.weights_shape = (self.size_hidden, y.shape[1])
         self.sigmas = solution[:self.size_hidden]
-        self.weights = np.reshape(solution[self.size_hidden:], self.weights.shape)
+        self.weights = np.reshape(solution[self.size_hidden:], self.weights_shape)
     
     def get_weights(self):
         return self.weights
@@ -445,8 +450,8 @@ class BaseMhaRbf(BaseRbf):
             problem_size = self.size_hidden + self.size_hidden * 1
         else:
             problem_size = self.size_hidden + self.size_hidden * y_scaled.shape[1]
-        lb = [-1, ] * problem_size
-        ub = [1, ] * problem_size
+        lb = [0., ]*self.size_hidden + [-1., ]*(problem_size - self.size_hidden)
+        ub = [10., ]*self.size_hidden + [1., ]*(problem_size - self.size_hidden)
         log_to = "console" if self.verbose else "None"
         if self.obj_name is None:
             raise ValueError("obj_name can't be None")
