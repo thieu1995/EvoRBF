@@ -13,8 +13,8 @@ from sklearn.base import BaseEstimator
 from mealpy import get_optimizer_by_name, Optimizer, get_all_optimizers
 from sklearn.cluster import KMeans
 
-from evorbf.utils import activation, validator
-from evorbf.utils.evaluator import get_all_regression_metrics, get_all_classification_metrics
+from evorbf.helpers import activation, validator
+from evorbf.helpers.metrics import get_all_regression_metrics, get_all_classification_metrics
 
 
 class RBF01:

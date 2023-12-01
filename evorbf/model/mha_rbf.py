@@ -8,8 +8,8 @@ import numpy as np
 from permetrics import RegressionMetric, ClassificationMetric
 from sklearn.base import ClassifierMixin, RegressorMixin
 from sklearn.preprocessing import OneHotEncoder
-from evorbf.base_rbf import BaseMhaRbf
-from evorbf.utils.encoder import ObjectiveScaler
+from evorbf.base_rbf_numpy import BaseMhaRbf
+from evorbf.helpers.scaler import ObjectiveScaler
 
 
 class MhaRbfRegressor(BaseMhaRbf, RegressorMixin):
@@ -166,4 +166,3 @@ class MhaRbfRegressor(BaseMhaRbf, RegressorMixin):
             The results of the list metrics
         """
         return self._BaseRbf__evaluate_reg(y_true, y_pred, list_metrics)
-

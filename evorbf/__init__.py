@@ -6,6 +6,6 @@
 
 __version__ = "0.0.1"
 
-from evorbf.utils.scaler import DataTransformer
-from evorbf.utils.preprocessor import Data, get_dataset
+from evorbf.helpers.scaler import DataTransformer
+from evorbf.helpers.preprocessor import Data, get_dataset
 from evorbf.model.mha_rbf import MhaRbfRegressor
