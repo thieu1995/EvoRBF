@@ -1,14 +1,21 @@
+evorbf/haha.py
+evorbf/utils/activation.py
+evorbf/base_rbf_torch.py
+evorbf/model/standard_rbf.py
+.github/
+.readthedocs.yaml
+run_classification.py
+run_regression.py
 ChangeLog.md
 CITATION.cff
 MANIFEST.in
-run_fs.py
 requirements.txt
 tests/
 examples/
 docs/
 .flake8
 README.md
-intelelm/
+
 setup.py
 
 examples/wrapper/history/
