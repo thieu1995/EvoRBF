@@ -5,16 +5,15 @@
 # --------------------------------------------------%
 
 import numpy as np
-from permetrics import RegressionMetric, ClassificationMetric
-from sklearn.base import ClassifierMixin, RegressorMixin
-from sklearn.preprocessing import OneHotEncoder
-from evorbf.base_rbf_numpy import BaseMhaRbf
+from permetrics import RegressionMetric
+from sklearn.base import RegressorMixin
+from evorbf.core.base_rbf import BaseInaRbf
 from evorbf.helpers.scaler import ObjectiveScaler
 
 
-class MhaRbfRegressor(BaseMhaRbf, RegressorMixin):
+class InaRbfRegressor(BaseInaRbf, RegressorMixin):
     """
-    Defines the general class of Metaheuristic-based RBF model for Regression problems that inherit the BaseMhaRbf and RegressorMixin classes.
+    Defines the general class of Metaheuristic-based RBF core for Regression problems that inherit the BaseInaRbf and RegressorMixin classes.
 
     Parameters
     ----------
@@ -35,7 +34,8 @@ class MhaRbfRegressor(BaseMhaRbf, RegressorMixin):
 
     optimizer_paras : None or dict of parameter, default=None
         The parameter for the `optimizer` object.
-        If `None`, the default parameters of optimizer is used (defined in https://github.com/thieu1995/mealpy.)
+        If `None`, the default parameters of
+        optimizer is used (defined in https://github.com/thieu1995/mealpy.)
         If `dict` is passed, make sure it has at least `epoch` and `pop_size` parameters.
 
     verbose : bool, default=False
@@ -43,22 +43,23 @@ class MhaRbfRegressor(BaseMhaRbf, RegressorMixin):
 
     Examples
     --------
-    >>> from evorbf import MhaRbfRegressor, Data
+    >>> from evorbf import InaRbfRegressor, Data
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_samples=200, random_state=1)
     >>> data = Data(X, y)
     >>> data.split_train_test(test_size=0.2, random_state=1)
     >>> opt_paras = {"name": "GA", "epoch": 10, "pop_size": 30}
-    >>> model = MhaRbfRegressor(hidden_size=10, act_name="elu", obj_name="RMSE", optimizer="BaseGA", optimizer_paras=opt_paras)
+    >>> model = InaRbfRegressor(size_hidden=10, center_finder="kmean", sigmas=2.0, regularization=False, lamda=0.01,
+    >>>         obj_name=None, optimizer="BaseGA", optimizer_paras=opt_paras, verbose=True, seed=42, obj_weights=None)
     >>> model.fit(data.X_train, data.y_train)
     >>> pred = model.predict(data.X_test)
     >>> print(pred)
     """
 
-    def __init__(self, regularization=False, size_hidden=10, center_finder="kmean", sigmas=(1.0, ), lamda=0.01,
-                 obj_name=None, optimizer="BaseGA", optimizer_paras=None, verbose=True, obj_weights=None):
-        super().__init__(regularization=regularization, size_hidden=size_hidden, center_finder=center_finder, sigmas=sigmas,
-                         lamda=lamda, obj_name=obj_name, optimizer=optimizer, optimizer_paras=optimizer_paras, verbose=verbose)
+    def __init__(self, size_hidden=10, center_finder="kmean", sigmas=2.0, regularization=False, lamda=0.01,
+                 obj_name=None, optimizer="BaseGA", optimizer_paras=None, verbose=True, seed=42, obj_weights=None):
+        super().__init__(size_hidden=size_hidden, center_finder=center_finder, sigmas=sigmas, regularization=regularization,
+                         lamda=lamda, obj_name=obj_name, optimizer=optimizer, optimizer_paras=optimizer_paras, verbose=verbose, seed=seed)
         self.obj_weights = obj_weights
 
     def create_network(self, X, y):
@@ -84,7 +85,7 @@ class MhaRbfRegressor(BaseMhaRbf, RegressorMixin):
         network = self._net_class(size_hidden=self.size_hidden, center_finder=self.center_finder, sigmas=self.sigmas, lamda=self.lamda)
         return network, obj_scaler
 
-    def fitness_function(self, solution=None):
+    def objective_function(self, solution=None):
         """
         Evaluates the fitness function for regression metric
 
@@ -97,7 +98,7 @@ class MhaRbfRegressor(BaseMhaRbf, RegressorMixin):
         result: float
             The fitness value
         """
-        self.network.update_parameters_by_solution(solution, self.X_temp, self.y_temp)
+        self.network.update_weights_from_solution(solution, self.X_temp, self.y_temp)
         y_pred = self.network.predict(self.X_temp)
         loss_train = RegressionMetric(self.y_temp, y_pred, decimal=6).get_metric_by_name(self.obj_name)[self.obj_name]
         return loss_train
