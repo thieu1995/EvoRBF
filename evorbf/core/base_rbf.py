@@ -10,20 +10,19 @@ import pandas as pd
 from pathlib import Path
 from permetrics import RegressionMetric, ClassificationMetric
 from sklearn.base import BaseEstimator
-from mealpy import get_optimizer_by_name, Optimizer, get_all_optimizers
+from mealpy import get_optimizer_by_name, Optimizer, get_all_optimizers, FloatVar
 from sklearn.cluster import KMeans
-
-from evorbf.helpers import activation, validator
+from evorbf.helpers import validator
 from evorbf.helpers.metrics import get_all_regression_metrics, get_all_classification_metrics
 
 
-class RBF01:
-    """Radial Basis Function version 01
+class RBF:
+    """Radial Basis Function
 
-    This class defines the general RBF model that:
+    This class defines the general RBF core that:
         + use non-linear Gaussian function
         + use inverse matrix multiplication instead of Gradient-based
-        + have no regulation term
+        + set up regulation term with hyperparameter `lamda`
 
     Parameters
     ----------
@@ -40,19 +39,23 @@ class RBF01:
         "swish", "hard_swish", "soft_plus", "mish", "soft_sign", "tanh_shrink", "soft_shrink", "hard_shrink" }, default='sigmoid'
         Activation function for the hidden layer.
     """
-    def __init__(self, size_hidden=10, center_finder="kmean", sigmas=(1.0, ), **kwargs):
+    def __init__(self, size_hidden=10, center_finder="kmean", sigmas=2.0, regularization=False, lamda=0.01, seed=42):
         self.size_hidden = size_hidden
         self.center_finder = center_finder
         self.sigmas = sigmas
+        self.regularization = regularization
+        self.lamda = lamda
+        self.seed = seed
         self.centers, self.weights, self.weights_shape = None, None, None
 
     @staticmethod
-    def calculate_centers(X, method="kmean", n_clusters=5):
+    def calculate_centers(X, method="kmean", n_clusters=5, seed=42):
         if method == "kmean":
-            kobj = KMeans(n_clusters=n_clusters, init='random', random_state=11).fit(X)
+            kobj = KMeans(n_clusters=n_clusters, init='random', random_state=seed).fit(X)
             return kobj.cluster_centers_
         elif method == "random":
-            return X[np.random.choice(len(X), n_clusters, replace=False)]
+            generator = np.random.default_rng(seed)
+            return X[generator.choice(len(X), n_clusters, replace=False)]
 
     @staticmethod
     def calculate_rbf(X, c, sigmas):
@@ -69,7 +72,7 @@ class RBF01:
         return rbf_layer
 
     def fit(self, X, y):
-        """Fit the model to data matrix X and target(s) y.
+        """Fit the core to data matrix X and target(s) y.
 
         Parameters
         ----------
@@ -82,18 +85,23 @@ class RBF01:
         Returns
         -------
         self : object
-            Returns a trained RBF model.
+            Returns a trained RBF core.
         """
         # Initialize centers
-        self.centers = self.calculate_centers(X, self.center_finder, self.size_hidden)
+        self.centers = self.calculate_centers(X, self.center_finder, self.size_hidden, self.seed)
         # Calculate RBF layer outputs
         rbf_layer = self.transform_X(X)
-        # Solve for weights using pseudo-inverse
-        self.weights = np.linalg.pinv(rbf_layer) @ y
+        if self.regularization:
+            # Solve for weights using ridge regression (L2 regularization)
+            iden = np.identity(self.size_hidden)
+            self.weights = np.linalg.inv(rbf_layer.T @ rbf_layer + self.lamda * iden) @ rbf_layer.T @ y
+        else:
+            # Solve for weights using pseudo-inverse
+            self.weights = np.linalg.pinv(rbf_layer) @ y
         return self
 
     def predict(self, X):
-        """Predict using the Radial Basis Function model.
+        """Predict using the Radial Basis Function core.
 
         Parameters
         ----------
@@ -108,16 +116,15 @@ class RBF01:
         rbf_layer = self.transform_X(X)
         return rbf_layer @ self.weights
     
-    def update_parameters_by_solution(self, solution, X, y):
+    def update_weights_from_solution(self, solution, X, y):
         if self.centers is None:
-            self.centers = self.calculate_centers(X, self.center_finder, self.size_hidden)
+            self.centers = self.calculate_centers(X, self.center_finder, self.size_hidden, self.seed)
         if self.weights_shape is None:
             if y.ndim == 1:
                 self.weights_shape = (self.size_hidden, 1)
             else:
                 self.weights_shape = (self.size_hidden, y.shape[1])
-        self.sigmas = solution[:self.size_hidden]
-        self.weights = np.reshape(solution[self.size_hidden:], self.weights_shape)
+        self.weights = np.reshape(solution, self.weights_shape)
     
     def get_weights(self):
         return self.weights
@@ -125,43 +132,8 @@ class RBF01:
     def set_weights(self, weights):
         self.weights = weights
 
-
-class RBF02(RBF01):
-    """Radial Basis Function version 02
-
-    This class defines the general RBF model that:
-        + use non-linear Gaussian function
-        + use inverse matrix multiplication instead of Gradient-based
-        + have regulation term with hyper-parameter `lamda`
-
-    Parameters
-    ----------
-    size_input : int, default=5
-        The number of input nodes
-
-    size_hidden : int, default=10
-        The number of hidden nodes
-
-    size_output : int, default=1
-        The number of output nodes
-
-    act_name : {"relu", "prelu", "gelu", "elu", "selu", "rrelu", "tanh", "hard_tanh", "sigmoid", "hard_sigmoid",
-        "swish", "hard_swish", "soft_plus", "mish", "soft_sign", "tanh_shrink", "soft_shrink", "hard_shrink" }, default='sigmoid'
-        Activation function for the hidden layer.
-    """
-    def __init__(self, size_hidden=10, center_finder="kmean", sigmas=(1.0,), lamda=0.01, **kwargs):
-        super().__init__(size_hidden, center_finder, sigmas, **kwargs)
-        self.lamda = lamda
-
-    def fit(self, X, y):
-        # Initialize centers
-        self.centers = self.calculate_centers(X, self.center_finder, self.size_hidden)
-        # Calculate RBF layer outputs
-        rbf_layer = self.transform_X(X)
-        # Solve for weights using ridge regression (L2 regularization)
-        iden = np.identity(self.size_hidden)
-        self.weights = np.linalg.inv(rbf_layer.T @ rbf_layer + self.lamda * iden) @ rbf_layer.T @ y
-        return self
+    def get_weights_size(self):
+        return self.weights.size()
 
 
 class BaseRbf(BaseEstimator):
@@ -182,16 +154,15 @@ class BaseRbf(BaseEstimator):
     SUPPORTED_REG_METRICS = get_all_regression_metrics()
     CLS_OBJ_LOSSES = None
 
-    def __init__(self, regularization=False, size_hidden=10, center_finder="kmean", sigmas=(1.0, ), lamda=0.01):
+    def __init__(self, size_hidden=10, center_finder="kmean", sigmas=2.0, regularization=False, lamda=0.01, seed=42):
         super().__init__()
-        self._net_class = RBF01
-        if regularization:
-            self._net_class = RBF02
-        self.regularization = regularization
+        self._net_class = RBF
         self.size_hidden = size_hidden
         self.center_finder = center_finder
         self.sigmas = sigmas
+        self.regularization = regularization
         self.lamda = lamda
+        self.seed = seed
         self.parameters = {}
         self.network, self.obj_scaler, self.loss_train, self.n_labels = None, None, None, None
 
@@ -341,7 +312,7 @@ class BaseRbf(BaseEstimator):
         ## Save loss train to csv file
         Path(save_path).mkdir(parents=True, exist_ok=True)
         if self.loss_train is None:
-            print(f"{self.__class__.__name__} model doesn't have training loss!")
+            print(f"{self.__class__.__name__} core doesn't have training loss!")
         else:
             data = {"epoch": list(range(1, len(self.loss_train) + 1)), "loss": self.loss_train}
             pd.DataFrame(data).to_csv(f"{save_path}/{filename}", index=False)
@@ -360,23 +331,23 @@ class BaseRbf(BaseEstimator):
         data = {"y_true": np.squeeze(np.asarray(y_true)), "y_pred": np.squeeze(np.asarray(y_pred))}
         pd.DataFrame(data).to_csv(f"{save_path}/{filename}", index=False)
 
-    def save_model(self, save_path="history", filename="model.pkl"):
-        ## Save model to pickle file
+    def save_model(self, save_path="history", filename="core.pkl"):
+        ## Save core to pickle file
         Path(save_path).mkdir(parents=True, exist_ok=True)
         if filename[-4:] != ".pkl":
             filename += ".pkl"
         pickle.dump(self, open(f"{save_path}/{filename}", 'wb'))
 
     @staticmethod
-    def load_model(load_path="history", filename="model.pkl"):
+    def load_model(load_path="history", filename="core.pkl"):
         if filename[-4:] != ".pkl":
             filename += ".pkl"
         return pickle.load(open(f"{load_path}/{filename}", 'rb'))
 
 
-class BaseMhaRbf(BaseRbf):
+class BaseInaRbf(BaseRbf):
     """
-    Defines the most general class for Metaheuristic-based RBF model that inherits the BaseELM class
+    Defines the most general class for Intelligence Nature-inspired Algorithm-based RBF core that inherits the BaseELM class
 
     Parameters
     ----------
@@ -408,10 +379,10 @@ class BaseMhaRbf(BaseRbf):
     SUPPORTED_CLS_OBJECTIVES = get_all_classification_metrics()
     SUPPORTED_REG_OBJECTIVES = get_all_regression_metrics()
 
-    def __init__(self, regularization=False, size_hidden=10, center_finder="kmean", sigmas=(1.0, ), lamda=0.01,
-                 obj_name=None, optimizer="BaseGA", optimizer_paras=None, verbose=True):
-        super().__init__(regularization=regularization, size_hidden=size_hidden,
-                         center_finder=center_finder, sigmas=sigmas, lamda=lamda)
+    def __init__(self, size_hidden=10, center_finder="kmean", sigmas=2.0, regularization=False, lamda=0.01,
+                 obj_name=None, optimizer="BaseGA", optimizer_paras=None, verbose=True, seed=42):
+        super().__init__(size_hidden=size_hidden, center_finder=center_finder, sigmas=sigmas,
+                         regularization=regularization, lamda=lamda, seed=seed)
         self.obj_name = obj_name
         self.optimizer_paras = optimizer_paras
         self.optimizer = self._set_optimizer(optimizer, optimizer_paras)
@@ -435,23 +406,33 @@ class BaseMhaRbf(BaseRbf):
     def _get_history_loss(self, optimizer=None):
         list_global_best = optimizer.history.list_global_best
         # 2D array / matrix 2D
-        global_obj_list = np.array([agent[1][-1] for agent in list_global_best])
-        # Make each obj_list as a element in array for drawing
-        return global_obj_list[:, 0]
+        return np.array([agent.target.fitness for agent in list_global_best])
 
-    def fitness_function(self, solution=None):
+    def objective_function(self, solution=None):
         pass
 
-    def fit(self, X, y):
+    def fit(self, X, y, lb=(-1.0, ), ub=(1.0, ), save_population=False):
         self.network, self.obj_scaler = self.create_network(X, y)
         y_scaled = self.obj_scaler.transform(y)
         self.X_temp, self.y_temp = X, y_scaled
         if y_scaled.ndim == 1:
-            problem_size = self.size_hidden + self.size_hidden * 1
+            problem_size = self.size_hidden * 1
         else:
-            problem_size = self.size_hidden + self.size_hidden * y_scaled.shape[1]
-        lb = [0., ]*self.size_hidden + [-1., ]*(problem_size - self.size_hidden)
-        ub = [10., ]*self.size_hidden + [1., ]*(problem_size - self.size_hidden)
+            problem_size = self.size_hidden * y_scaled.shape[1]
+        if type(lb) in (list, tuple, np.ndarray) and type(ub) in (list, tuple, np.ndarray):
+            if len(lb) == len(ub):
+                if len(lb) == 1:
+                    lb = np.array(lb * problem_size, dtype=float)
+                    ub = np.array(ub * problem_size, dtype=float)
+                elif len(lb) != problem_size:
+                    raise ValueError(f"Invalid lb and ub. Their length should be equal to 1 or problem_size.")
+            else:
+                raise ValueError(f"Invalid lb and ub. They should have the same length.")
+        elif type(lb) in (int, float) and type(ub) in (int, float):
+            lb = (float(lb), ) * problem_size
+            ub = (float(ub), ) * problem_size
+        else:
+            raise ValueError(f"Invalid lb and ub. They should be a number of list/tuple/np.ndarray with size equal to problem_size")
         log_to = "console" if self.verbose else "None"
         if self.obj_name is None:
             raise ValueError("obj_name can't be None")
@@ -463,15 +444,14 @@ class BaseMhaRbf(BaseRbf):
             else:
                 raise ValueError("obj_name is not supported. Please check the library: permetrics to see the supported objective function.")
         problem = {
-            "fit_func": self.fitness_function,
-            "lb": lb,
-            "ub": ub,
+            "obj_func": self.objective_function,
+            "bounds": FloatVar(lb=lb, ub=ub),
             "minmax": minmax,
             "log_to": log_to,
-            "save_population": False,
+            "save_population": save_population,
             "obj_weights": self.obj_weights
         }
-        self.solution, self.best_fit = self.optimizer.solve(problem)
-        self.network.update_parameters_by_solution(self.solution, self.X_temp, self.y_temp)
+        self.optimizer.solve(problem, seed=self.seed)
+        self.network.update_weights_from_solution(self.optimizer.g_best.solution, X, y_scaled)
         self.loss_train = self._get_history_loss(optimizer=self.optimizer)
         return self
