@@ -1,6 +1,6 @@
 
 <p align="center">
-<img style="max-width:100%;" src="https://thieu1995.github.io/post/2023-08/evorbf.png" alt="EvoRBF"/>
+<img style="max-width:100%;" src="https://thieu1995.github.io/post/2023-08/evorbf1.png" alt="EvoRBF"/>
 </p>
 
 ---
