@@ -56,9 +56,9 @@ class InaRbfRegressor(BaseInaRbf, RegressorMixin):
     >>> print(pred)
     """
 
-    def __init__(self, size_hidden=10, center_finder="kmean", sigmas=2.0, regularization=False, lamda=0.01,
+    def __init__(self, size_hidden=10, center_finder="kmean", regularization=False, lamda=0.01,
                  obj_name=None, optimizer="BaseGA", optimizer_paras=None, verbose=True, seed=42, obj_weights=None):
-        super().__init__(size_hidden=size_hidden, center_finder=center_finder, sigmas=sigmas, regularization=regularization,
+        super().__init__(size_hidden=size_hidden, center_finder=center_finder, regularization=regularization,
                          lamda=lamda, obj_name=obj_name, optimizer=optimizer, optimizer_paras=optimizer_paras, verbose=verbose, seed=seed)
         self.obj_weights = obj_weights
 
@@ -82,7 +82,7 @@ class InaRbfRegressor(BaseInaRbf, RegressorMixin):
             else:
                 raise TypeError("Invalid obj_weights array type, it should be list, tuple or np.ndarray")
         obj_scaler = ObjectiveScaler(obj_name="self", ohe_scaler=None)
-        network = self._net_class(size_hidden=self.size_hidden, center_finder=self.center_finder, sigmas=self.sigmas, lamda=self.lamda)
+        network = self._net_class(size_hidden=self.size_hidden, center_finder=self.center_finder, lamda=self.lamda)
         return network, obj_scaler
 
     def objective_function(self, solution=None):

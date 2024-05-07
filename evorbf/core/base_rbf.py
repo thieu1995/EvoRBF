@@ -51,7 +51,7 @@ class RBF:
     @staticmethod
     def calculate_centers(X, method="kmean", n_clusters=5, seed=42):
         if method == "kmean":
-            kobj = KMeans(n_clusters=n_clusters, init='random', random_state=seed).fit(X)
+            kobj = KMeans(n_clusters=n_clusters, n_init='auto', random_state=seed).fit(X)
             return kobj.cluster_centers_
         elif method == "random":
             generator = np.random.default_rng(seed)
@@ -124,7 +124,8 @@ class RBF:
                 self.weights_shape = (self.size_hidden, 1)
             else:
                 self.weights_shape = (self.size_hidden, y.shape[1])
-        self.weights = np.reshape(solution, self.weights_shape)
+        self.sigmas = solution[:self.size_hidden]
+        self.weights = np.reshape(solution[self.size_hidden:], self.weights_shape)
     
     def get_weights(self):
         return self.weights
@@ -154,12 +155,11 @@ class BaseRbf(BaseEstimator):
     SUPPORTED_REG_METRICS = get_all_regression_metrics()
     CLS_OBJ_LOSSES = None
 
-    def __init__(self, size_hidden=10, center_finder="kmean", sigmas=2.0, regularization=False, lamda=0.01, seed=42):
+    def __init__(self, size_hidden=10, center_finder="kmean", regularization=False, lamda=0.01, seed=42):
         super().__init__()
         self._net_class = RBF
         self.size_hidden = size_hidden
         self.center_finder = center_finder
-        self.sigmas = sigmas
         self.regularization = regularization
         self.lamda = lamda
         self.seed = seed
@@ -379,9 +379,9 @@ class BaseInaRbf(BaseRbf):
     SUPPORTED_CLS_OBJECTIVES = get_all_classification_metrics()
     SUPPORTED_REG_OBJECTIVES = get_all_regression_metrics()
 
-    def __init__(self, size_hidden=10, center_finder="kmean", sigmas=2.0, regularization=False, lamda=0.01,
+    def __init__(self, size_hidden=10, center_finder="kmean", regularization=False, lamda=0.01,
                  obj_name=None, optimizer="BaseGA", optimizer_paras=None, verbose=True, seed=42):
-        super().__init__(size_hidden=size_hidden, center_finder=center_finder, sigmas=sigmas,
+        super().__init__(size_hidden=size_hidden, center_finder=center_finder,
                          regularization=regularization, lamda=lamda, seed=seed)
         self.obj_name = obj_name
         self.optimizer_paras = optimizer_paras
@@ -416,21 +416,23 @@ class BaseInaRbf(BaseRbf):
         y_scaled = self.obj_scaler.transform(y)
         self.X_temp, self.y_temp = X, y_scaled
         if y_scaled.ndim == 1:
-            problem_size = self.size_hidden * 1
+            problem_size = self.size_hidden
         else:
             problem_size = self.size_hidden * y_scaled.shape[1]
+        ub_sigma = [np.mean(np.max(X, axis=0)), ] * self.size_hidden
+        lb_sigma = [0.01, ] * self.size_hidden
         if type(lb) in (list, tuple, np.ndarray) and type(ub) in (list, tuple, np.ndarray):
             if len(lb) == len(ub):
                 if len(lb) == 1:
-                    lb = np.array(lb * problem_size, dtype=float)
-                    ub = np.array(ub * problem_size, dtype=float)
+                    lb = np.array(lb_sigma + list(lb) * problem_size, dtype=float)
+                    ub = np.array(ub_sigma + list(ub) * problem_size, dtype=float)
                 elif len(lb) != problem_size:
                     raise ValueError(f"Invalid lb and ub. Their length should be equal to 1 or problem_size.")
             else:
                 raise ValueError(f"Invalid lb and ub. They should have the same length.")
         elif type(lb) in (int, float) and type(ub) in (int, float):
-            lb = (float(lb), ) * problem_size
-            ub = (float(ub), ) * problem_size
+            lb = lb_sigma + [float(lb), ] * problem_size
+            ub = ub_sigma + [float(ub), ] * problem_size
         else:
             raise ValueError(f"Invalid lb and ub. They should be a number of list/tuple/np.ndarray with size equal to problem_size")
         log_to = "console" if self.verbose else "None"
