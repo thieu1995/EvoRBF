@@ -9,15 +9,9 @@ run_classification.py
 run_regression.py
 ChangeLog.md
 CITATION.cff
-MANIFEST.in
-requirements.txt
-tests/
-examples/
 docs/
-.flake8
 README.md
 
-setup.py
 
 examples/wrapper/history/
 # Pycharm
