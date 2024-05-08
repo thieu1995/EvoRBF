@@ -1,0 +1,11 @@
+cff-version: 1.1.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Van Thieu"
+    given-names: "Nguyen"
+    orcid: "https://orcid.org/0000-0001-9994-8747"
+title: "EvoRBF: Evolving Radial Basis Function Network by Intelligent Nature-inspired Algorithms"
+version: 0.1.0
+doi: 10.5281/zenodo.11136007
+date-released: 2023-05-08
+url: "https://github.com/thieu1995/EvoRBF"
