@@ -4,12 +4,9 @@ evorbf/base_rbf_torch.py
 evorbf/model/standard_rbf.py
 
 .github/
-.readthedocs.yaml
 run_classification.py
 run_regression.py
 ChangeLog.md
-CITATION.cff
-docs/
 
 examples/wrapper/history/
 # Pycharm
