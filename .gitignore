@@ -1,9 +1,5 @@
-evorbf/haha.py
-evorbf/helpers/activation.py
-evorbf/base_rbf_torch.py
-evorbf/model/standard_rbf.py
 
-.github/
+.github/assets/
 run_classification.py
 run_regression.py
 ChangeLog.md
