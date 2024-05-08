@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Welcome to EvoRBF's documentation!
-====================================
+==================================
 
 .. image:: https://img.shields.io/badge/release-0.1.0-yellow.svg
    :target: https://github.com/thieu1995/evorbf/releases
@@ -65,7 +65,7 @@ perform searches and hyperparameter tuning using the functionalities provided by
 * **Supported performance metrics**: >= 67 (47 regressions and 20 classifications)
 * **Supported loss functions**: >= 61 (45 regressions and 16 classifications)
 * **Documentation:** https://evorbf.readthedocs.io/en/latest/
-* **Python versions:** >= 3.7.x
+* **Python versions:** >= 3.8.x
 * **Dependencies:** numpy, scipy, scikit-learn, pandas, mealpy, permetrics
 
 
