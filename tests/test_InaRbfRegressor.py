@@ -5,6 +5,7 @@
 # --------------------------------------------------%
 
 import numpy as np
+
 from evorbf import InaRbfRegressor
 
 np.random.seed(42)
@@ -17,7 +18,7 @@ def test_MhaElmRegressor_class():
 
     opt_paras = {"name": "GA", "epoch": 10, "pop_size": 30}
     model = InaRbfRegressor(size_hidden=10, center_finder="kmean", regularization=False, lamda=0.01,
-                 obj_name="MSE", optimizer="BaseGA", optimizer_paras=opt_paras, verbose=True, seed=42, obj_weights=None)
+                            obj_name="MSE", optimizer="BaseGA", optimizer_paras=opt_paras, verbose=True, seed=42, obj_weights=None)
     model.fit(X, y)
 
     pred = model.predict(X)
