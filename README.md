@@ -19,12 +19,12 @@
 [![Chat](https://img.shields.io/badge/Chat-on%20Telegram-blue)](https://t.me/+fRVCJGuGJg1mNDg1)
 ![GitHub contributors](https://img.shields.io/github/contributors/thieu1995/evorbf.svg)
 [![GitTutorial](https://img.shields.io/badge/PR-Welcome-%23FF8300.svg?)](https://git-scm.com/book/en/v2/GitHub-Contributing-to-a-Project)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8249045.svg)](https://doi.org/10.5281/zenodo.8249045)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11136007.svg)](https://doi.org/10.5281/zenodo.11136007)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 
-EvoRBF (Evolving Radial Basis Function Network) is a Python library that implements a framework 
-for training Radial Basis Function (RBF) networks using Intelligence Nature-inspired Algorithms (INAs). It provides a 
+**EvoRBF (Evolving Radial Basis Function Network)** is a Python library that implements a framework 
+for training Radial Basis Function (RBF) networks using `Intelligence Nature-inspired Algorithms (INAs)`. It provides a 
 comparable alternative to the traditional RBF network and is compatible with the Scikit-Learn library. With EvoRBF, you can 
 perform searches and hyperparameter tuning using the functionalities provided by the Scikit-Learn library.
 
@@ -45,6 +45,28 @@ need to read the paper titled "Application of artificial intelligence in estimat
 The paper can be accessed at the following [this link](https://doi.org/10.1016/B978-0-443-18764-3.00015-1)
 
 
+```bibtex
+@software{thieu_2024_11136008,
+  author       = {Nguyen Van Thieu},
+  title        = {EvoRBF: Evolving Radial Basis Function Network by Intelligent Nature-inspired Algorithms},
+  month        = may,
+  year         = 2024,
+  publisher    = {Zenodo},
+  doi          = {10.5281/zenodo.11136007},
+  url          = {https://doi.org/10.5281/zenodo.11136007}
+}
+
+@article{van2023mealpy,
+  title={MEALPY: An open-source library for latest meta-heuristic algorithms in Python},
+  author={Van Thieu, Nguyen and Mirjalili, Seyedali},
+  journal={Journal of Systems Architecture},
+  year={2023},
+  publisher={Elsevier},
+  doi={10.1016/j.sysarc.2023.102871}
+}
+```
+
+
 # Usage
 
 * Install the [current PyPI release](https://pypi.python.org/pypi/evorbf):
@@ -60,9 +82,8 @@ $ python
 >>> evorbf.__version__
 ```
 
-In this section, we will explore the usage of the EvoRBF model with the assistance of a dataset. While all the 
-preprocessing steps mentioned below can be replicated using Scikit-Learn, we have implemented some utility functions 
-to provide users with convenience and faster usage.  
+In this example below, we will use Whale Optimization Algorithm to optimize the Signma and Weights of hidden layer 
+in RBF network (WOA-RBF model) for Diabetes prediction problem.
 
 ```python
 import numpy as np
