@@ -23,19 +23,21 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 
-**EvoRBF (Evolving Radial Basis Function Network)** is a Python library that implements a framework 
+**EvoRBF** is a Python library that implements a framework 
 for training Radial Basis Function (RBF) networks using `Intelligence Nature-inspired Algorithms (INAs)`. It provides a 
 comparable alternative to the traditional RBF network and is compatible with the Scikit-Learn library. With EvoRBF, you can 
 perform searches and hyperparameter tuning using the functionalities provided by the Scikit-Learn library.
 
-* **Free software:** GNU General Public License (GPL) V3 license
-* **Provided Estimator**: RbfRegressor, RbfClassifier, InaRbfRegressor, InaRbfClassifier
-* **Total InaRBf models**: > 400 Models
-* **Supported performance metrics**: >= 67 (47 regressions and 20 classifications)
-* **Supported loss functions**: >= 61 (45 regressions and 16 classifications)
-* **Documentation:** https://evorbf.readthedocs.io/en/latest/
-* **Python versions:** >= 3.8.x
-* **Dependencies:** numpy, scipy, scikit-learn, pandas, mealpy, permetrics
+| **EvoRBF**                           | **Evolving Radial Basis Function Network**                     |
+|--------------------------------------|----------------------------------------------------------------|
+| **Free software**                    | GNU General Public License (GPL) V3 license                    |
+| **Provided Estimator**               | RbfRegressor, RbfClassifier, InaRbfRegressor, InaRbfClassifier |
+| **Provided machine learning models** | \> 400 Models                                                  |
+| **Supported performance metrics**    | \>= 67 (47 regressions and 20 classifications)                 |
+| **Supported loss functions**         | \>= 61 (45 regressions and 16 classifications)                 |
+| **Documentation**                    | https://evorbf.readthedocs.io                                  | 
+| **Python versions**                  | \>= 3.8.x                                                      |  
+| **Dependencies**                     | numpy, scipy, scikit-learn, pandas, mealpy, permetrics         |
 
 
 # Citation Request 
