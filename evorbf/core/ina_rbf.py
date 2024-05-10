@@ -60,7 +60,7 @@ class InaRbfRegressor(BaseInaRbf, RegressorMixin):
     """
 
     def __init__(self, size_hidden=10, center_finder="kmean", regularization=False, lamda=0.01,
-                 obj_name=None, optimizer="BaseGA", optimizer_paras=None, verbose=True, seed=42, obj_weights=None):
+                 obj_name=None, optimizer="BaseGA", optimizer_paras=None, verbose=True, seed=None, obj_weights=None):
         super().__init__(size_hidden=size_hidden, center_finder=center_finder, regularization=regularization,
                          lamda=lamda, obj_name=obj_name, optimizer=optimizer, optimizer_paras=optimizer_paras, verbose=verbose, seed=seed)
         self.obj_weights = obj_weights
@@ -202,7 +202,7 @@ class InaRbfClassifier(BaseInaRbf, ClassifierMixin):
     CLS_OBJ_LOSSES = ["CEL", "HL", "KLDL", "BSL"]
 
     def __init__(self, size_hidden=10, center_finder="kmean", regularization=False, lamda=0.01,
-                 obj_name=None, optimizer="BaseGA", optimizer_paras=None, verbose=True, seed=42, obj_weights=None):
+                 obj_name=None, optimizer="BaseGA", optimizer_paras=None, verbose=True, seed=None, obj_weights=None):
         super().__init__(size_hidden=size_hidden, center_finder=center_finder, regularization=regularization,
                          lamda=lamda, obj_name=obj_name, optimizer=optimizer, optimizer_paras=optimizer_paras, verbose=verbose, seed=seed)
         self.return_prob = False

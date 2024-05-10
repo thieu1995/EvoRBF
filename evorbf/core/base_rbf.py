@@ -39,7 +39,7 @@ class RBF:
         "swish", "hard_swish", "soft_plus", "mish", "soft_sign", "tanh_shrink", "soft_shrink", "hard_shrink" }, default='sigmoid'
         Activation function for the hidden layer.
     """
-    def __init__(self, size_hidden=10, center_finder="kmean", sigmas=2.0, regularization=False, lamda=0.01, seed=42):
+    def __init__(self, size_hidden=10, center_finder="kmean", sigmas=2.0, regularization=False, lamda=0.01, seed=None):
         self.size_hidden = size_hidden
         self.center_finder = center_finder
         self.sigmas = sigmas
@@ -64,8 +64,8 @@ class RBF:
 
     def transform_X(self, X):
         # Calculate RBF layer outputs
-        if self.centers is None or self.weights is None:
-            raise Exception("Model not trained.")
+        if self.centers is None:
+            raise Exception("Model is not trained yet.")
         rbf_layer = np.zeros((X.shape[0], self.size_hidden))
         for i in range(X.shape[0]):
             rbf_layer[i] = self.calculate_rbf(X[i], self.centers, self.sigmas)
@@ -155,11 +155,12 @@ class BaseRbf(BaseEstimator):
     SUPPORTED_REG_METRICS = get_all_regression_metrics()
     CLS_OBJ_LOSSES = None
 
-    def __init__(self, size_hidden=10, center_finder="kmean", regularization=False, lamda=0.01, seed=42):
+    def __init__(self, size_hidden=10, center_finder="kmean", sigmas=2.0, regularization=False, lamda=0.01, seed=None):
         super().__init__()
         self._net_class = RBF
         self.size_hidden = size_hidden
         self.center_finder = center_finder
+        self.sigmas = sigmas
         self.regularization = regularization
         self.lamda = lamda
         self.seed = seed
@@ -380,7 +381,7 @@ class BaseInaRbf(BaseRbf):
     SUPPORTED_REG_OBJECTIVES = get_all_regression_metrics()
 
     def __init__(self, size_hidden=10, center_finder="kmean", regularization=False, lamda=0.01,
-                 obj_name=None, optimizer="BaseGA", optimizer_paras=None, verbose=True, seed=42):
+                 obj_name=None, optimizer="BaseGA", optimizer_paras=None, verbose=True, seed=None):
         super().__init__(size_hidden=size_hidden, center_finder=center_finder,
                          regularization=regularization, lamda=lamda, seed=seed)
         self.obj_name = obj_name

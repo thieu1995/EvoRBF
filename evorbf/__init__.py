@@ -9,3 +9,4 @@ __version__ = "0.1.0"
 from evorbf.helpers.scaler import DataTransformer
 from evorbf.helpers.preprocessor import Data
 from evorbf.core.ina_rbf import InaRbfRegressor, InaRbfClassifier
+from evorbf.core.standard_rbf import RbfRegressor
