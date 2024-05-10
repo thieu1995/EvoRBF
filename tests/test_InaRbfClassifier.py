@@ -15,7 +15,7 @@ def test_InaRbfClassifier_class():
 
     opt_paras = {"name": "GA", "epoch": 10, "pop_size": 30}
     model = InaRbfClassifier(size_hidden=25, center_finder="kmean", regularization=False, lamda=0.5, obj_name="NPV",
-                        optimizer="OriginalWOA", optimizer_paras=opt_paras, verbose=True, seed=42)
+                             optimizer="OriginalWOA", optimizer_paras=opt_paras, verbose=True, seed=42)
     model.fit(X, y)
     pred = model.predict(X)
     assert InaRbfClassifier.SUPPORTED_CLS_OBJECTIVES == model.SUPPORTED_CLS_OBJECTIVES
