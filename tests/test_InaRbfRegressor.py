@@ -11,7 +11,7 @@ from evorbf import InaRbfRegressor
 np.random.seed(42)
 
 
-def test_MhaElmRegressor_class():
+def test_InaRbfRegressor_class():
     X = np.random.uniform(low=0.0, high=1.0, size=(100, 5))
     noise = np.random.normal(loc=0.0, scale=0.1, size=(100, 5))
     y = 2 * X + 1 + noise
