@@ -203,17 +203,17 @@ class BaseRbf(BaseEstimator):
         return self.obj_scaler.inverse_transform(pred)
 
     def __evaluate_reg(self, y_true, y_pred, list_metrics=("MSE", "MAE")):
-        rm = RegressionMetric(y_true=y_true, y_pred=y_pred, decimal=8)
+        rm = RegressionMetric(y_true=y_true, y_pred=y_pred)
         return rm.get_metrics_by_list_names(list_metrics)
 
     def __evaluate_cls(self, y_true, y_pred, list_metrics=("AS", "RS")):
-        cm = ClassificationMetric(y_true, y_pred, decimal=8)
+        cm = ClassificationMetric(y_true, y_pred)
         return cm.get_metrics_by_list_names(list_metrics)
     
     def __score_reg(self, X, y, method="RMSE"):
         method = self._check_method(method, list(self.SUPPORTED_REG_METRICS.keys()))
         y_pred = self.network.predict(X)
-        return RegressionMetric(y, y_pred, decimal=8).get_metric_by_name(method)[method]
+        return RegressionMetric(y, y_pred).get_metric_by_name(method)[method]
     
     def __scores_reg(self, X, y, list_methods=("MSE", "MAE")):
         y_pred = self.network.predict(X)
@@ -226,7 +226,7 @@ class BaseRbf(BaseEstimator):
             if method in self.CLS_OBJ_LOSSES:
                 return_prob = True
         y_pred = self.predict(X, return_prob=return_prob)
-        cm = ClassificationMetric(y_true=y, y_pred=y_pred, decimal=8)
+        cm = ClassificationMetric(y_true=y, y_pred=y_pred)
         return cm.get_metric_by_name(method)[method]
 
     def __scores_cls(self, X, y, list_methods=("AS", "RS")):

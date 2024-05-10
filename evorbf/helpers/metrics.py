@@ -17,14 +17,12 @@ from permetrics.classification import ClassificationMetric
 def get_metrics(problem, y_true, y_pred, metrics=None, testcase="test"):
     if problem == "regression":
         evaluator = RegressionMetric(y_true, y_pred)
-        paras = [{"decimal": 4}, ] * len(metrics)
     else:
         evaluator = ClassificationMetric(y_true, y_pred)
-        paras = [{"average": "weighted"}, ] * len(metrics)
     if type(metrics) is dict:
         result = evaluator.get_metrics_by_dict(metrics)
     elif type(metrics) in (tuple, list):
-        result = evaluator.get_metrics_by_list_names(metrics, paras)
+        result = evaluator.get_metrics_by_list_names(metrics)
     else:
         raise ValueError("metrics parameter should be a list or dict")
     final_result = {}
