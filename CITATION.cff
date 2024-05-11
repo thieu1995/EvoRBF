@@ -5,7 +5,7 @@ authors:
     given-names: "Nguyen"
     orcid: "https://orcid.org/0000-0001-9994-8747"
 title: "EvoRBF: Evolving Radial Basis Function Network by Intelligent Nature-inspired Algorithms"
-version: 0.1.0
+version: 1.0.0
 doi: 10.5281/zenodo.11136007
-date-released: 2023-05-08
+date-released: 2023-05-11
 url: "https://github.com/thieu1995/EvoRBF"
