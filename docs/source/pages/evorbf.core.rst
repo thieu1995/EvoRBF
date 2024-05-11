@@ -17,3 +17,11 @@ evorbf.core.ina\_rbf module
    :members:
    :undoc-members:
    :show-inheritance:
+
+evorbf.core.standard\_rbf module
+--------------------------------
+
+.. automodule:: evorbf.core.standard_rbf
+   :members:
+   :undoc-members:
+   :show-inheritance:
