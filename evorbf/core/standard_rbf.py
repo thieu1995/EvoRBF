@@ -15,17 +15,31 @@ class RbfRegressor(BaseRbf, RegressorMixin):
     """
     Defines the RBF model for Regression problems that inherit the BaseRbf and RegressorMixin classes.
 
+    This class defines the RBF regressor model that:
+        + use non-linear Gaussian function
+        + use inverse matrix multiplication instead of Gradient-based
+        + set up regulation term with hyperparameter `lamda`
+
     Parameters
     ----------
-    hidden_size : int, default=10
+    size_hidden : int, default=10
         The number of hidden nodes
 
-    act_name : {"relu", "leaky_relu", "celu", "prelu", "gelu", "elu", "selu", "rrelu", "tanh", "hard_tanh", "sigmoid",
-        "hard_sigmoid", "log_sigmoid", "silu", "swish", "hard_swish", "soft_plus", "mish", "soft_sign", "tanh_shrink",
-        "soft_shrink", "hard_shrink", "softmin", "softmax", "log_softmax" }, default='sigmoid'
-        Activation function for the hidden layer.
+    center_finder : str, default="kmean"
+        The method is used to find the cluster centers
 
-    seed: int, default=None
+    sigmas : float, default=2.0
+        The sigma values that are used in Gaussian function. In traditional RBF model, 1 sigma value is used
+        for all of hidden nodes. But in Intelligence Nature-inspired Algorithms (INAs) based RBF model, each
+        sigma is assigned to 1 hidden node.
+
+    regularization : bool, default=False
+        Set up the regularization or not
+
+    lamda : float, default=0.01
+        The lamda value is used in regularization term
+
+    seed : int, default=None
         Determines random number generation for weights and bias initialization.
         Pass an int for reproducible results across multiple function calls.
 
@@ -36,7 +50,7 @@ class RbfRegressor(BaseRbf, RegressorMixin):
     >>> X, y = make_regression(n_samples=200, random_state=1)
     >>> data = Data(X, y)
     >>> data.split_train_test(test_size=0.2, random_state=1)
-    >>> model = RbfRegressor(hidden_size=10, act_name="elu")
+    >>> model = RbfRegressor(size_hidden=10, center_finder="kmean", sigmas=2.0, regularization=False, lamda=0.01, seed=42)
     >>> model.fit(data.X_train, data.y_train)
     >>> pred = model.predict(data.X_test)
     >>> print(pred)
@@ -131,17 +145,31 @@ class RbfClassifier(BaseRbf, ClassifierMixin):
     """
     Defines the general class of Metaheuristic-based RBF model for Classification problems that inherit the BaseRbf and ClassifierMixin classes.
 
+    This class defines the RBF classifier model that:
+        + use non-linear Gaussian function
+        + use inverse matrix multiplication instead of Gradient-based
+        + set up regulation term with hyperparameter `lamda`
+
     Parameters
     ----------
-    hidden_size : int, default=10
+    size_hidden : int, default=10
         The number of hidden nodes
 
-    act_name : {"relu", "leaky_relu", "celu", "prelu", "gelu", "elu", "selu", "rrelu", "tanh", "hard_tanh", "sigmoid",
-        "hard_sigmoid", "log_sigmoid", "silu", "swish", "hard_swish", "soft_plus", "mish", "soft_sign", "tanh_shrink",
-        "soft_shrink", "hard_shrink", "softmin", "softmax", "log_softmax" }, default='sigmoid'
-        Activation function for the hidden layer.
+    center_finder : str, default="kmean"
+        The method is used to find the cluster centers
 
-    seed: int, default=None
+    sigmas : float, default=2.0
+        The sigma values that are used in Gaussian function. In traditional RBF model, 1 sigma value is used
+        for all of hidden nodes. But in Intelligence Nature-inspired Algorithms (INAs) based RBF model, each
+        sigma is assigned to 1 hidden node.
+
+    regularization : bool, default=False
+        Set up the regularization or not
+
+    lamda : float, default=0.01
+        The lamda value is used in regularization term
+
+    seed : int, default=None
         Determines random number generation for weights and bias initialization.
         Pass an int for reproducible results across multiple function calls.
 
@@ -152,7 +180,7 @@ class RbfClassifier(BaseRbf, ClassifierMixin):
     >>> X, y = make_classification(n_samples=100, random_state=1)
     >>> data = Data(X, y)
     >>> data.split_train_test(test_size=0.2, random_state=1)
-    >>> model = RbfClassifier(hidden_size=10, act_name="elu")
+    >>> model = RbfClassifier(size_hidden=10, center_finder="kmean", sigmas=2.0, regularization=False, lamda=0.01, seed=None)
     >>> model.fit(data.X_train, data.y_train)
     >>> pred = model.predict(data.X_test)
     >>> print(pred)
