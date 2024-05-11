@@ -4,7 +4,7 @@
 #       Github: https://github.com/thieu1995        %                         
 # --------------------------------------------------%
 
-__version__ = "0.2.0"
+__version__ = "1.0.0"
 
 from evorbf.helpers.scaler import DataTransformer
 from evorbf.helpers.preprocessor import Data
