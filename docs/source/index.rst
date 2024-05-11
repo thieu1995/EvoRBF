@@ -6,7 +6,7 @@
 Welcome to EvoRBF's documentation!
 ==================================
 
-.. image:: https://img.shields.io/badge/release-0.2.0-yellow.svg
+.. image:: https://img.shields.io/badge/release-1.0.0-yellow.svg
    :target: https://github.com/thieu1995/evorbf/releases
 
 .. image:: https://img.shields.io/pypi/wheel/gensim.svg
@@ -45,8 +45,8 @@ Welcome to EvoRBF's documentation!
 .. image:: https://img.shields.io/badge/PR-Welcome-%23FF8300.svg?
    :target: https://git-scm.com/book/en/v2/GitHub-Contributing-to-a-Project
 
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.1113600.svg
-   :target: https://doi.org/10.5281/zenodo.1113600
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.11136007.svg
+   :target: https://doi.org/10.5281/zenodo.11136007
 
 .. image:: https://img.shields.io/badge/License-GPLv3-blue.svg
    :target: https://www.gnu.org/licenses/gpl-3.0
@@ -60,7 +60,7 @@ comparable alternative to the traditional RBF network and is compatible with the
 perform searches and hyperparameter tuning using the functionalities provided by the Scikit-Learn library.
 
 * **Free software:** GNU General Public License (GPL) V3 license
-* **Provided Estimator**: RbfRegressor, RbfClassifier, InaRbfRegressor, InaRbfClassifier
+* **Provided Estimator**: RbfRegressor, RbfClassifier, InaRbfRegressor, InaRbfClassifier, InaRbfTuner
 * **Total InaRBf models**: > 400 Models
 * **Supported performance metrics**: >= 67 (47 regressions and 20 classifications)
 * **Supported loss functions**: >= 61 (45 regressions and 16 classifications)

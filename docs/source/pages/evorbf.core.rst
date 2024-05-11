@@ -1,7 +1,6 @@
 evorbf.core package
 ===================
 
-
 evorbf.core.base\_rbf module
 ----------------------------
 
@@ -14,6 +13,14 @@ evorbf.core.ina\_rbf module
 ---------------------------
 
 .. automodule:: evorbf.core.ina_rbf
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+evorbf.core.rbf\_tuner module
+-----------------------------
+
+.. automodule:: evorbf.core.rbf_tuner
    :members:
    :undoc-members:
    :show-inheritance:
