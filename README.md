@@ -6,7 +6,7 @@
 ---
 
 
-[![GitHub release](https://img.shields.io/badge/release-0.2.0-yellow.svg)](https://github.com/thieu1995/evorbf/releases)
+[![GitHub release](https://img.shields.io/badge/release-1.0.0-yellow.svg)](https://github.com/thieu1995/evorbf/releases)
 [![Wheel](https://img.shields.io/pypi/wheel/gensim.svg)](https://pypi.python.org/pypi/evorbf) 
 [![PyPI version](https://badge.fury.io/py/evorbf.svg)](https://badge.fury.io/py/evorbf)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/evorbf.svg)
@@ -28,16 +28,16 @@ for training Radial Basis Function (RBF) networks using `Intelligence Nature-ins
 comparable alternative to the traditional RBF network and is compatible with the Scikit-Learn library. With EvoRBF, you can 
 perform searches and hyperparameter tuning using the functionalities provided by the Scikit-Learn library.
 
-| **EvoRBF**                           | **Evolving Radial Basis Function Network**                     |
-|--------------------------------------|----------------------------------------------------------------|
-| **Free software**                    | GNU General Public License (GPL) V3 license                    |
-| **Provided Estimator**               | RbfRegressor, RbfClassifier, InaRbfRegressor, InaRbfClassifier |
-| **Provided machine learning models** | \> 400 Models                                                  |
-| **Supported performance metrics**    | \>= 67 (47 regressions and 20 classifications)                 |
-| **Supported loss functions**         | \>= 61 (45 regressions and 16 classifications)                 |
-| **Documentation**                    | https://evorbf.readthedocs.io                                  | 
-| **Python versions**                  | \>= 3.8.x                                                      |  
-| **Dependencies**                     | numpy, scipy, scikit-learn, pandas, mealpy, permetrics         |
+| **EvoRBF**                   | **Evolving Radial Basis Function Network**                                  |
+|------------------------------|-----------------------------------------------------------------------------|
+| **Free software**            | GNU General Public License (GPL) V3 license                                 |
+| **Provided Estimator**       | RbfRegressor, RbfClassifier, InaRbfRegressor, InaRbfClassifier, InaRbfTuner |
+| **Provided ML models**       | \> 400 Models                                                               |
+| **Supported metrics**        | \>= 67 (47 regressions and 20 classifications)                              |
+| **Supported loss functions** | \>= 61 (45 regressions and 16 classifications)                              |
+| **Documentation**            | https://evorbf.readthedocs.io                                               | 
+| **Python versions**          | \>= 3.8.x                                                                   |  
+| **Dependencies**             | numpy, scipy, scikit-learn, pandas, mealpy, permetrics                      |
 
 
 # Citation Request 
@@ -84,8 +84,8 @@ $ python
 >>> evorbf.__version__
 ```
 
-In this example below, we will use Whale Optimization Algorithm to optimize the Signma and Weights of hidden layer 
-in RBF network (WOA-RBF model) for Diabetes prediction problem.
+In this example below, we will use Whale Optimization Algorithm to optimize the `sigmas` (in non-linear Gaussian 
+kernel) and `weights` (of hidden-output layer) in RBF network (WOA-RBF model) for Diabetes prediction problem.
 
 ```python
 import numpy as np
@@ -126,28 +126,16 @@ print(model.scores(X=data.X_test, y=data.y_test, list_methods=["R2", "R", "KGE",
 print(model.evaluate(y_true=data.y_test, y_pred=y_pred, list_metrics=["MSE", "RMSE", "R2S", "NSE", "KGE", "MAPE"]))
 ```
 
-A real-world dataset contains features that vary in magnitudes, units, and range. We would suggest performing 
-normalization when the scale of a feature is irrelevant or misleading. Feature Scaling basically helps to normalize 
-the data within a particular range.
+Please go check out the [examples](/examples) folder. You'll be surprised by what this library can do for your problem.
+You can also read the [documentation](https://evorbf.readthedocs.io/) for more detailed installation 
+instructions, explanations, and examples.
 
 
-# Support (questions, problems)
+### Official Links (Get support for questions and answers)
 
-### Official Links 
-
-* Official source code repo: https://github.com/thieu1995/evorbf
-* Official document: https://evorbf.readthedocs.io/
-* Download releases: https://pypi.org/project/evorbf/
-* Issue tracker: https://github.com/thieu1995/evorbf/issues
-* Notable changes log: https://github.com/thieu1995/evorbf/blob/master/ChangeLog.md
-* Official chat group: https://t.me/+fRVCJGuGJg1mNDg1
-
-* This project also related to our another projects which are "optimization" and "machine learning", check it here:
-    * https://github.com/thieu1995/mealpy
-    * https://github.com/thieu1995/metaheuristics
-    * https://github.com/thieu1995/opfunu
-    * https://github.com/thieu1995/enoppy
-    * https://github.com/thieu1995/permetrics
-    * https://github.com/thieu1995/MetaCluster
-    * https://github.com/thieu1995/pfevaluator
-    * https://github.com/aiir-team
+* [Official source code repository](https://github.com/thieu1995/evorbf)
+* [Official document](https://evorbf.readthedocs.io/)
+* [Download releases](https://pypi.org/project/evorbf/) 
+* [Issue tracker](https://github.com/thieu1995/evorbf/issues) 
+* [Notable changes log](/ChangeLog.md)
+* [Official discussion group](https://t.me/+fRVCJGuGJg1mNDg1)
