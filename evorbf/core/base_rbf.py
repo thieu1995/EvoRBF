@@ -19,25 +19,32 @@ from evorbf.helpers.metrics import get_all_regression_metrics, get_all_classific
 class RBF:
     """Radial Basis Function
 
-    This class defines the general RBF core that:
+    This class defines the general RBF model that:
         + use non-linear Gaussian function
         + use inverse matrix multiplication instead of Gradient-based
         + set up regulation term with hyperparameter `lamda`
 
     Parameters
     ----------
-    size_input : int, default=5
-        The number of input nodes
-
     size_hidden : int, default=10
         The number of hidden nodes
 
-    size_output : int, default=1
-        The number of output nodes
+    center_finder : str, default="kmean"
+        The method is used to find the cluster centers
 
-    act_name : {"relu", "prelu", "gelu", "elu", "selu", "rrelu", "tanh", "hard_tanh", "sigmoid", "hard_sigmoid",
-        "swish", "hard_swish", "soft_plus", "mish", "soft_sign", "tanh_shrink", "soft_shrink", "hard_shrink" }, default='sigmoid'
-        Activation function for the hidden layer.
+    sigmas : float, default=2.0
+        The sigma values that are used in Gaussian function. In traditional RBF model, 1 sigma value is used
+        for all of hidden nodes. But in Intelligence Nature-inspired Algorithms (INAs) based RBF model, each
+        sigma is assigned to 1 hidden node.
+
+    regularization : bool, default=False
+        Set up the regularization or not
+
+    lamda : float, default=0.01
+        The lamda value is used in regularization term
+
+    seed : int, default=None
+        The seed value is used for reproducibility.
     """
     def __init__(self, size_hidden=10, center_finder="kmean", sigmas=2.0, regularization=False, lamda=0.01, seed=None):
         self.size_hidden = size_hidden
@@ -117,6 +124,9 @@ class RBF:
         return rbf_layer @ self.weights
     
     def update_weights_from_solution(self, solution, X, y):
+        """
+        This function is used for INA-based RBF model. Whenever a solution is generated, it will call this function.
+        """
         if self.centers is None:
             self.centers = self.calculate_centers(X, self.center_finder, self.size_hidden, self.seed)
         if self.weights_shape is None:
@@ -143,12 +153,25 @@ class BaseRbf(BaseEstimator):
 
     Parameters
     ----------
-    hidden_size : int, default=10
+    size_hidden : int, default=10
         The number of hidden nodes
 
-    act_name : {"relu", "prelu", "gelu", "elu", "selu", "rrelu", "tanh", "hard_tanh", "sigmoid", "hard_sigmoid",
-        "swish", "hard_swish", "soft_plus", "mish", "soft_sign", "tanh_shrink", "soft_shrink", "hard_shrink" }, default='sigmoid'
-        Activation function for the hidden layer.
+    center_finder : str, default="kmean"
+        The method is used to find the cluster centers
+
+    sigmas : float, default=2.0
+        The sigma values that are used in Gaussian function. In traditional RBF model, 1 sigma value is used
+        for all of hidden nodes. But in Intelligence Nature-inspired Algorithms (INAs) based RBF model, each
+        sigma is assigned to 1 hidden node.
+
+    regularization : bool, default=False
+        Set up the regularization or not
+
+    lamda : float, default=0.01
+        The lamda value is used in regularization term
+
+    seed : int, default=None
+        The seed value is used for reproducibility.
     """
 
     SUPPORTED_CLS_METRICS = get_all_classification_metrics()
@@ -348,16 +371,27 @@ class BaseRbf(BaseEstimator):
 
 class BaseInaRbf(BaseRbf):
     """
-    Defines the most general class for Intelligence Nature-inspired Algorithm-based RBF core that inherits the BaseELM class
+    Defines the most general class for Intelligence Nature-inspired Algorithm-based RBF models that inherits the BaseRbf class
+
+    Note:
+    -----
+        + In this models, the sigmas will be learned during the training process.
+        + So the `sigmas` parameter is removed in the init function.
+        + Besides, the `sigmas` is a list of value, each value represent a `sigma` for Gaussian function used in hidden node.
 
     Parameters
     ----------
-    hidden_size : int, default=10
+    size_hidden : int, default=10
         The number of hidden nodes
 
-    act_name : {"relu", "prelu", "gelu", "elu", "selu", "rrelu", "tanh", "hard_tanh", "sigmoid", "hard_sigmoid",
-        "swish", "hard_swish", "soft_plus", "mish", "soft_sign", "tanh_shrink", "soft_shrink", "hard_shrink" }, default='sigmoid'
-        Activation function for the hidden layer.
+    center_finder : str, default="kmean"
+        The method is used to find the cluster centers
+
+    regularization : bool, default=False
+        Set up the regularization or not
+
+    lamda : float, default=0.01
+        The lamda value is used in regularization term
 
     obj_name : None or str, default=None
         The name of objective for the problem, also depend on the problem is classification and regression.
@@ -374,6 +408,9 @@ class BaseInaRbf(BaseRbf):
 
     verbose : bool, default=True
         Whether to print progress messages to stdout.
+
+    seed : int, default=None
+        The seed value is used for reproducibility.
     """
 
     SUPPORTED_OPTIMIZERS = list(get_all_optimizers().keys())
