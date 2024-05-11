@@ -10,3 +10,4 @@ from evorbf.helpers.scaler import DataTransformer
 from evorbf.helpers.preprocessor import Data
 from evorbf.core.ina_rbf import InaRbfRegressor, InaRbfClassifier
 from evorbf.core.standard_rbf import RbfRegressor, RbfClassifier
+from evorbf.core.rbf_tuner import InaRbfTuner
