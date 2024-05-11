@@ -3,29 +3,39 @@
 #       Email: nguyenthieu2102@gmail.com            %
 #       Github: https://github.com/thieu1995        %
 # --------------------------------------------------%
-from typing import Tuple
 
+from typing import Tuple
 import numpy as np
 from permetrics import RegressionMetric, ClassificationMetric
 from sklearn.base import RegressorMixin, ClassifierMixin
 from sklearn.preprocessing import OneHotEncoder
-
 from evorbf.core.base_rbf import BaseInaRbf, RBF
 from evorbf.helpers.scaler import ObjectiveScaler
 
 
 class InaRbfRegressor(BaseInaRbf, RegressorMixin):
     """
-    Defines the general class of Metaheuristic-based RBF core for Regression problems that inherit the BaseInaRbf and RegressorMixin classes.
+    Defines the general class of Intelligence Nature-inspired Algorithm-based RBF models for Regression problems.
+    It inherits the BaseInaRbf and RegressorMixin (from scikit-learn library) classes.
+
+    This class defines the InaRbf regressor model that:
+        + Use INA algorithm to find `sigmas` value and `weights` of output layer.
+        + use non-linear Gaussian function with `sigma` as standard deviation
+        + set up regulation term with hyperparameter `lamda`
 
     Parameters
     ----------
-    hidden_size : int, default=10
+    size_hidden : int, default=10
         The number of hidden nodes
 
-    act_name : {"relu", "prelu", "gelu", "elu", "selu", "rrelu", "tanh", "hard_tanh", "sigmoid", "hard_sigmoid",
-        "swish", "hard_swish", "soft_plus", "mish", "soft_sign", "tanh_shrink", "soft_shrink", "hard_shrink" }, default='sigmoid'
-        Activation function for the hidden layer.
+    center_finder : str, default="kmean"
+        The method is used to find the cluster centers
+
+    regularization : bool, default=False
+        Set up the regularization or not
+
+    lamda : float, default=0.01
+        The lamda value is used in regularization term
 
     obj_name : None or str, default=None
         The name of objective for the problem, also depend on the problem is classification and regression.
@@ -37,12 +47,14 @@ class InaRbfRegressor(BaseInaRbf, RegressorMixin):
 
     optimizer_paras : None or dict of parameter, default=None
         The parameter for the `optimizer` object.
-        If `None`, the default parameters of
-        optimizer is used (defined in https://github.com/thieu1995/mealpy.)
+        If `None`, the default parameters of optimizer is used (defined in https://github.com/thieu1995/mealpy.)
         If `dict` is passed, make sure it has at least `epoch` and `pop_size` parameters.
 
-    verbose : bool, default=False
+    verbose : bool, default=True
         Whether to print progress messages to stdout.
+
+    seed : int, default=None
+        The seed value is used for reproducibility.
 
     Examples
     --------
@@ -52,7 +64,7 @@ class InaRbfRegressor(BaseInaRbf, RegressorMixin):
     >>> data = Data(X, y)
     >>> data.split_train_test(test_size=0.2, random_state=1)
     >>> opt_paras = {"name": "GA", "epoch": 10, "pop_size": 30}
-    >>> model = InaRbfRegressor(size_hidden=10, center_finder="kmean", sigmas=2.0, regularization=False, lamda=0.01,
+    >>> model = InaRbfRegressor(size_hidden=10, center_finder="kmean", regularization=False, lamda=0.01,
     >>>         obj_name=None, optimizer="BaseGA", optimizer_paras=opt_paras, verbose=True, seed=42, obj_weights=None)
     >>> model.fit(data.X_train, data.y_train)
     >>> pred = model.predict(data.X_test)
@@ -174,16 +186,46 @@ class InaRbfRegressor(BaseInaRbf, RegressorMixin):
 
 class InaRbfClassifier(BaseInaRbf, ClassifierMixin):
     """
-    Defines the general class of Metaheuristic-based RBF model for Classification problems that inherit the BaseInaRbf and ClassifierMixin classes.
+    Defines the general class of Intelligence Nature-inspired Algorithm-based RBF models for Classification problems.
+    It inherits the BaseInaRbf and ClassifierMixin (from scikit-learn library) classes.
+
+    This class defines the InaRbf classifier model that:
+        + Use INA algorithm to find `sigmas` value and `weights` of output layer.
+        + use non-linear Gaussian function with `sigma` as standard deviation
+        + set up regulation term with hyperparameter `lamda`
 
     Parameters
     ----------
-    hidden_size : int, default=10
+    size_hidden : int, default=10
         The number of hidden nodes
 
-    act_name : {"relu", "prelu", "gelu", "elu", "selu", "rrelu", "tanh", "hard_tanh", "sigmoid", "hard_sigmoid",
-        "swish", "hard_swish", "soft_plus", "mish", "soft_sign", "tanh_shrink", "soft_shrink", "hard_shrink" }, default='sigmoid'
-        Activation function for the hidden layer.
+    center_finder : str, default="kmean"
+        The method is used to find the cluster centers
+
+    regularization : bool, default=False
+        Set up the regularization or not
+
+    lamda : float, default=0.01
+        The lamda value is used in regularization term
+
+    obj_name : None or str, default=None
+        The name of objective for the problem, also depend on the problem is classification and regression.
+
+    optimizer : str or instance of Optimizer class (from Mealpy library), default = "BaseGA"
+        The Metaheuristic Algorithm that use to solve the feature selection problem.
+        Current supported list, please check it here: https://github.com/thieu1995/mealpy.
+        If a custom optimizer is passed, make sure it is an instance of `Optimizer` class.
+
+    optimizer_paras : None or dict of parameter, default=None
+        The parameter for the `optimizer` object.
+        If `None`, the default parameters of optimizer is used (defined in https://github.com/thieu1995/mealpy.)
+        If `dict` is passed, make sure it has at least `epoch` and `pop_size` parameters.
+
+    verbose : bool, default=True
+        Whether to print progress messages to stdout.
+
+    seed : int, default=None
+        The seed value is used for reproducibility.
 
     Examples
     --------
@@ -192,7 +234,10 @@ class InaRbfClassifier(BaseInaRbf, ClassifierMixin):
     >>> X, y = make_classification(n_samples=100, random_state=1)
     >>> data = Data(X, y)
     >>> data.split_train_test(test_size=0.2, random_state=1)
-    >>> model = InaRbfClassifier(hidden_size=10, act_name="elu")
+    >>> opt_paras = {"name": "WOA", "epoch": 100, "pop_size": 30}
+    >>> print(InaRbfClassifier.SUPPORTED_CLS_OBJECTIVES)
+    >>> model = InaRbfClassifier(size_hidden=25, center_finder="kmean", regularization=False, lamda=0.5, obj_name="AS",
+    >>>             optimizer="OriginalWOA", optimizer_paras=opt_paras, verbose=True, seed=42)
     >>> model.fit(data.X_train, data.y_train)
     >>> pred = model.predict(data.X_test)
     >>> print(pred)
