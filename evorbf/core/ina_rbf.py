@@ -8,9 +8,8 @@ from typing import Tuple
 import numpy as np
 from permetrics import RegressionMetric, ClassificationMetric
 from sklearn.base import RegressorMixin, ClassifierMixin
-from sklearn.preprocessing import OneHotEncoder
 from evorbf.core.base_rbf import BaseInaRbf, RBF
-from evorbf.helpers.scaler import ObjectiveScaler
+from evorbf.helpers.scaler import ObjectiveScaler, OneHotEncoder
 
 
 class InaRbfRegressor(BaseInaRbf, RegressorMixin):
@@ -267,7 +266,7 @@ class InaRbfClassifier(BaseInaRbf, ClassifierMixin):
         if self.n_labels > 2:
             if self.obj_name in self.CLS_OBJ_LOSSES:
                 self.return_prob = True
-        ohe_scaler = OneHotEncoder(sparse_output=False)
+        ohe_scaler = OneHotEncoder()
         ohe_scaler.fit(np.reshape(y, (-1, 1)))
         obj_scaler = ObjectiveScaler(obj_name="softmax", ohe_scaler=ohe_scaler)
         network = self._net_class(size_hidden=self.size_hidden, center_finder=self.center_finder,

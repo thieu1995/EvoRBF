@@ -11,6 +11,40 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler
 
 
+class OneHotEncoder:
+    def __init__(self):
+        self.categories_ = None
+
+    def fit(self, X):
+        """Fit the encoder to unique categories in X."""
+        self.categories_ = np.unique(X)
+        return self
+
+    def transform(self, X):
+        """Transform X into one-hot encoded format."""
+        if self.categories_ is None:
+            raise ValueError("The encoder has not been fitted yet.")
+        one_hot = np.zeros((X.shape[0], len(self.categories_)), dtype=int)
+        for i, val in enumerate(X):
+            index = np.where(self.categories_ == val)[0][0]
+            one_hot[i, index] = 1
+        return one_hot
+
+    def fit_transform(self, X):
+        """Fit the encoder to X and transform X."""
+        self.fit(X)
+        return self.transform(X)
+
+    def inverse_transform(self, one_hot):
+        """Convert one-hot encoded format back to original categories."""
+        if self.categories_ is None:
+            raise ValueError("The encoder has not been fitted yet.")
+        if one_hot.shape[1] != len(self.categories_):
+            raise ValueError("The shape of the input does not match the number of categories.")
+        original = np.array([self.categories_[np.argmax(row)] for row in one_hot])
+        return original
+
+
 class ObjectiveScaler:
     """
     For label scaler in classification (binary and multiple classification)

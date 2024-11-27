@@ -6,9 +6,8 @@
 
 import numpy as np
 from sklearn.base import ClassifierMixin, RegressorMixin
-from sklearn.preprocessing import OneHotEncoder
 from evorbf.core.base_rbf import BaseRbf, RBF
-from evorbf.helpers.scaler import ObjectiveScaler
+from evorbf.helpers.scaler import ObjectiveScaler, OneHotEncoder
 
 
 class RbfRegressor(BaseRbf, RegressorMixin):
@@ -203,7 +202,7 @@ class RbfClassifier(BaseRbf, ClassifierMixin):
                 raise TypeError("Invalid y array shape, it should be 1D vector containing labels 0, 1, 2,.. and so on.")
         else:
             raise TypeError("Invalid y array type, it should be list, tuple or np.ndarray")
-        ohe_scaler = OneHotEncoder(sparse_output=False)
+        ohe_scaler = OneHotEncoder()
         ohe_scaler.fit(np.reshape(y, (-1, 1)))
         obj_scaler = ObjectiveScaler(obj_name="softmax", ohe_scaler=ohe_scaler)
         network = RBF(size_hidden=self.size_hidden, center_finder=self.center_finder, sigmas=self.sigmas,
