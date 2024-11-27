@@ -2,7 +2,7 @@
 Citation Request
 ================
 
-If you want to understand how Intelligence Nature-inspired Algorithms is applied to Radial Basis Function Network, you
+If you want to understand how Nature-inspired Algorithms is applied to Radial Basis Function Network, you
 need to read the paper titled "Application of artificial intelligence in estimating mining capital expenditure using radial basis function neural network optimized by metaheuristic algorithms".
 The paper can be accessed at the following `this link <https://doi.org/10.1016/B978-0-443-18764-3.00015-1>`_
 
@@ -11,7 +11,7 @@ Please include these citations if you plan to use this library::
 
 	@software{thieu_2024_11136008,
 	  author       = {Nguyen Van Thieu},
-	  title        = {EvoRBF: Evolving Radial Basis Function Network by Intelligent Nature-inspired Algorithms},
+	  title        = {EvoRBF: A Nature-inspired Algorithmic Framework for Evolving Radial Basis Function Networks},
 	  month        = may,
 	  year         = 2024,
 	  publisher    = {Zenodo},

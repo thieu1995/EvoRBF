@@ -15,7 +15,7 @@ from evorbf.helpers.scaler import ObjectiveScaler
 
 class InaRbfRegressor(BaseInaRbf, RegressorMixin):
     """
-    Defines the general class of Intelligence Nature-inspired Algorithm-based RBF models for Regression problems.
+    Defines the general class of Nature-inspired Algorithm-based RBF models for Regression problems.
     It inherits the BaseInaRbf and RegressorMixin (from scikit-learn library) classes.
 
     This class defines the InaRbf regressor model that:
@@ -186,7 +186,7 @@ class InaRbfRegressor(BaseInaRbf, RegressorMixin):
 
 class InaRbfClassifier(BaseInaRbf, ClassifierMixin):
     """
-    Defines the general class of Intelligence Nature-inspired Algorithm-based RBF models for Classification problems.
+    Defines the general class of Nature-inspired Algorithm-based RBF models for Classification problems.
     It inherits the BaseInaRbf and ClassifierMixin (from scikit-learn library) classes.
 
     This class defines the InaRbf classifier model that:

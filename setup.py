@@ -18,7 +18,7 @@ setup(
     version="1.0.0",
     author="Thieu",
     author_email="nguyenthieu2102@gmail.com",
-    description="EvoRBF: Evolving Radial Basis Function Network by Intelligent Nature-inspired Algorithms",
+    description="EvoRBF: A Nature-inspired Algorithmic Framework for Evolving Radial Basis Function Networks",
     long_description=readme(),
     long_description_content_type="text/markdown",
     keywords=["radial basis function", "machine learning", "artificial intelligence",

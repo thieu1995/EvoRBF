@@ -52,10 +52,10 @@ Welcome to EvoRBF's documentation!
    :target: https://www.gnu.org/licenses/gpl-3.0
 
 
-**EvoRBF: Evolving Radial Basis Function Network by Intelligent Nature-inspired Algorithms**
+**EvoRBF: A Nature-inspired Algorithmic Framework for Evolving Radial Basis Function Networks**
 
 EvoRBF (Evolving Radial Basis Function Network) is a Python library that implements a framework
-for training Radial Basis Function (RBF) networks using `Intelligence Nature-inspired Algorithms (INAs)`. It provides a
+for training Radial Basis Function (RBF) networks using `Nature-inspired Algorithms (NIAs)`. It provides a
 comparable alternative to the traditional RBF network and is compatible with the Scikit-Learn library. With EvoRBF, you can
 perform searches and hyperparameter tuning using the functionalities provided by the Scikit-Learn library.
 

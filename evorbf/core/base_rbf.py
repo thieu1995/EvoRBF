@@ -34,7 +34,7 @@ class RBF:
 
     sigmas : float, default=2.0
         The sigma values that are used in Gaussian function. In traditional RBF model, 1 sigma value is used
-        for all of hidden nodes. But in Intelligence Nature-inspired Algorithms (INAs) based RBF model, each
+        for all of hidden nodes. But in Nature-inspired Algorithms (NIAs) based RBF model, each
         sigma is assigned to 1 hidden node.
 
     regularization : bool, default=False
@@ -161,7 +161,7 @@ class BaseRbf(BaseEstimator):
 
     sigmas : float, default=2.0
         The sigma values that are used in Gaussian function. In traditional RBF model, 1 sigma value is used
-        for all of hidden nodes. But in Intelligence Nature-inspired Algorithms (INAs) based RBF model, each
+        for all of hidden nodes. But in Nature-inspired Algorithms (NIAs) based RBF model, each
         sigma is assigned to 1 hidden node.
 
     regularization : bool, default=False
@@ -371,7 +371,7 @@ class BaseRbf(BaseEstimator):
 
 class BaseInaRbf(BaseRbf):
     """
-    Defines the most general class for Intelligence Nature-inspired Algorithm-based RBF models that inherits the BaseRbf class
+    Defines the most general class for Nature-inspired Algorithm-based RBF models that inherits the BaseRbf class
 
     Note:
     -----

@@ -1,4 +1,13 @@
 
+# Version 1.1.0
+
++ Rename the title of framework
++ Rename the parameter for `score`, `scores` function.
++ Rename proposed classes.
++ Add ChangeLog.md
+
+---------------------------------------------------------------------
+
 # Version 1.0.0
 
 + Add InaRbfTuner class
