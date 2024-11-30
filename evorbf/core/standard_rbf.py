@@ -12,32 +12,31 @@ from evorbf.helpers.scaler import ObjectiveScaler, OneHotEncoder
 
 class RbfRegressor(BaseRbf, RegressorMixin):
     """
-    Defines the RBF model for Regression problems that inherit the BaseRbf and RegressorMixin classes.
+    Implements a Radial Basis Function (RBF) model for regression tasks.
 
-    This class defines the RBF regressor model that:
-        + use non-linear Gaussian function
-        + use inverse matrix multiplication for output weights
-        + set up regulation term with hyperparameter `reg_lambda`
+    This class extends `BaseRbf` and `RegressorMixin` to provide a regression model that:
+        - Uses a non-linear Gaussian kernel function.
+        - Computes output weights using inverse matrix multiplication.
+        - Incorporates L2 regularization with the `reg_lambda` parameter.
 
     Parameters
     ----------
     size_hidden : int, default=10
-        The number of hidden nodes
+        Number of hidden nodes in the RBF network.
 
     center_finder : str, default="kmeans"
-        The method is used to find the cluster centers
+        Method for finding the cluster centers. Options include methods like "random" or "kmeans".
 
     sigmas : float, default=2.0
-        The sigma values that are used in Gaussian function. In traditional RBF model, 1 sigma value is used
-        for all of hidden nodes. But in Nature-inspired Algorithms (NIAs) based RBF model, each
-        sigma is assigned to 1 hidden node.
+        The width (sigma) of the Gaussian kernel.
+        - In the standard RBF model, a single sigma value is used for all hidden nodes.
+        - In nature-inspired algorithms (NIAs)-based RBF models, each hidden node can have a unique sigma value.
 
     reg_lambda : float, default=0.1
-        The lamda value is used in regularization term. If set to 0, then no L2 is applied
+        Regularization parameter for L2 regularization. Set to `0` to disable regularization.
 
     seed : int, default=None
-        Determines random number generation for weights and bias initialization.
-        Pass an int for reproducible results across multiple function calls.
+        Random seed for reproducibility in center initialization and weight generation.
 
     Examples
     --------
@@ -50,6 +49,20 @@ class RbfRegressor(BaseRbf, RegressorMixin):
     >>> model.fit(data.X_train, data.y_train)
     >>> pred = model.predict(data.X_test)
     >>> print(pred)
+
+    Methods
+    -------
+    create_network(X, y):
+        Constructs the RBF network based on the input data and labels.
+
+    score(X, y):
+        Calculates the R^2 (R-squared) score for the model's predictions.
+
+    scores(X, y, list_metrics=("MSE", "MAE")):
+        Computes a list of specified performance metrics (e.g., MSE, MAE) for the model's predictions.
+
+    evaluate(y_true, y_pred, list_metrics=("MSE", "MAE")):
+        Evaluates the model's performance using true and predicted values, based on a specified list of metrics.
     """
 
     def __init__(self, size_hidden=10, center_finder="kmeans", sigmas=2.0, reg_lambda=0.1, seed=None):
@@ -136,32 +149,34 @@ class RbfRegressor(BaseRbf, RegressorMixin):
 
 class RbfClassifier(BaseRbf, ClassifierMixin):
     """
-    Defines the general class of Metaheuristic-based RBF model for Classification problems that inherit the BaseRbf and ClassifierMixin classes.
+    A Radial Basis Function (RBF) model for classification tasks.
 
-    This class defines the RBF classifier model that:
-        + use non-linear Gaussian function
-        + use inverse matrix multiplication instead of Gradient-based
-        + set up regulation term with hyperparameter `lamda`
+    This class implements an RBF classifier that uses non-linear Gaussian activation functions
+    and inverse matrix multiplication for output weight calculation. It allows for regularization
+    through an L2 term.
 
     Parameters
     ----------
     size_hidden : int, default=10
-        The number of hidden nodes
+        The number of hidden nodes in the RBF network.
 
     center_finder : str, default="kmeans"
-        The method is used to find the cluster centers
+        The method used to find cluster centers. For example, "kmeans" applies the K-Means clustering algorithm.
 
     sigmas : float, default=2.0
-        The sigma values that are used in Gaussian function. In traditional RBF model, 1 sigma value is used
-        for all of hidden nodes. But in Nature-inspired Algorithms (NIAs) based RBF model, each
-        sigma is assigned to 1 hidden node.
+        The sigma value for the Gaussian activation function. In a traditional RBF model, one sigma is used for all
+        hidden nodes. In Nature-inspired Algorithm-based RBF models, each hidden node may have its own sigma value.
 
     reg_lambda : float, default=0.1
-        The lamda value is used in regularization term. If set to 0, then no L2 is applied
+        The regularization parameter for the L2 regularization term. Setting this to 0 disables regularization.
 
-    seed : int, None, default=None
-        Determines random number generation for weights and bias initialization.
-        Pass an int for reproducible results across multiple function calls.
+    seed : int or None, default=None
+        The random seed for initializing the weights and biases. Specify an integer value for reproducibility.
+
+    Attributes
+    ----------
+    n_labels : int
+        The number of unique labels in the target dataset. Determined during the creation of the network.
 
     Examples
     --------
@@ -175,6 +190,11 @@ class RbfClassifier(BaseRbf, ClassifierMixin):
     >>> pred = model.predict(data.X_test)
     >>> print(pred)
     array([1, 0, 1, 0, 1])
+
+    Notes
+    -----
+    - This class requires the Permetrics library to evaluate performance metrics.
+    - One-hot encoding is applied internally to handle multi-class classification problems.
     """
 
     CLS_OBJ_LOSSES = ["CEL", "HL", "KLDL", "BSL"]
@@ -184,6 +204,28 @@ class RbfClassifier(BaseRbf, ClassifierMixin):
         self.n_labels = None
 
     def create_network(self, X, y):
+        """
+        Initializes the RBF network and prepares data for classification.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The input data.
+        y : array-like of shape (n_samples,)
+            The target labels. Must be a 1D array or vector containing integer class labels.
+
+        Returns
+        -------
+        network : CustomRBF
+            The initialized RBF network with the specified configuration.
+        obj_scaler : ObjectiveScaler
+            The scaler that applies one-hot encoding and the softmax activation function.
+
+        Raises
+        ------
+        TypeError
+            If the target array `y` is not a 1D array or is of an unsupported type.
+        """
         if type(y) in (list, tuple, np.ndarray):
             y = np.squeeze(np.asarray(y))
             if y.ndim == 1:
@@ -201,7 +243,7 @@ class RbfClassifier(BaseRbf, ClassifierMixin):
 
     def score(self, X, y):
         """
-        Return the accuracy score on the given test data and labels.
+        Calculates the accuracy of the model on the given test data and labels.
 
         In multi-label classification, this is the subset accuracy which is a harsh metric
         since you require for each sample that each label set be correctly predicted.
@@ -217,13 +259,13 @@ class RbfClassifier(BaseRbf, ClassifierMixin):
         Returns
         -------
         result : float
-            The result of selected metric
+            The accuracy score of the classifier.
         """
         return self._BaseRbf__score_cls(X, y)
 
     def scores(self, X, y, list_metrics=("AS", "RS")):
         """
-        Return the list of metrics on the given test data and labels.
+        Computes multiple performance metrics for the given test data and labels.
 
         In multi-label classification, this is the subset accuracy which is a harsh metric
         since you require for each sample that each label set be correctly predicted.
@@ -237,18 +279,18 @@ class RbfClassifier(BaseRbf, ClassifierMixin):
             True labels for `X`.
 
         list_metrics : list, default=("AS", "RS")
-            You can get all of the metrics from Permetrics library: https://github.com/thieu1995/permetrics
+            You can get all metrics from Permetrics library: https://github.com/thieu1995/permetrics
 
         Returns
         -------
         results : dict
-            The results of the list metrics
+             A dictionary where keys are metric names and values are the computed metric scores.
         """
         return self._BaseRbf__scores_cls(X, y, list_metrics)
 
     def evaluate(self, y_true, y_pred, list_metrics=("AS", "RS")):
         """
-        Return the list of performance metrics on the given test data and labels.
+        Evaluates performance metrics for predicted values compared to true labels.
 
         Parameters
         ----------
@@ -264,6 +306,6 @@ class RbfClassifier(BaseRbf, ClassifierMixin):
         Returns
         -------
         results : dict
-            The results of the list metrics
+            A dictionary where keys are metric names and values are the computed metric scores.
         """
         return self._BaseRbf__evaluate_cls(y_true, y_pred, list_metrics)
