@@ -5,8 +5,8 @@
 # --------------------------------------------------%
 
 from sklearn.datasets import load_breast_cancer
-from mealpy import StringVar, IntegerVar, FloatVar, BoolVar
-from evorbf import Data, InaRbfTuner
+from mealpy import StringVar, IntegerVar, FloatVar
+from evorbf import Data, NiaRbfTuner
 
 
 ## Load data object
@@ -27,17 +27,16 @@ data.y_test = scaler_y.transform(data.y_test)
 # Design the boundary (parameters)
 my_bounds = [
     IntegerVar(lb=5, ub=21, name="size_hidden"),
-    StringVar(valid_sets=("kmean", "random"), name="center_finder"),
+    StringVar(valid_sets=("kmeans", "random"), name="center_finder"),
     FloatVar(lb=(0.01,), ub=(3.0,), name="sigmas"),
-    BoolVar(n_vars=1, name="regularization"),
-    FloatVar(lb=(0.001, ), ub=(0.99, ), name="lamda"),
+    FloatVar(lb=(0, ), ub=(1.0, ), name="reg_lambda"),
 ]
 
 opt_paras = {"name": "WOA", "epoch": 10, "pop_size": 20}
-model = InaRbfTuner(problem_type="classification", bounds=my_bounds, cv=3, scoring="AS",
-                      optimizer="OriginalWOA", optimizer_paras=opt_paras, verbose=True, seed=42)
+model = NiaRbfTuner(problem_type="classification", bounds=my_bounds, cv=3, scoring="AS",
+                    optim="OriginalWOA", optim_paras=opt_paras, verbose=True, seed=42)
 
 model.fit(data.X_train, data.y_train)
 print(model.best_params)
 print(model.best_estimator)
-print(model.best_estimator.scores(data.X_test, data.y_test, list_metrics=("PS", "RS", "NPV", "F1S", "F2S")))
+print(model.best_estimator.scores(data.X_test, data.y_test, list_metrics=("AS", "PS", "RS", "NPV", "F1S", "F2S")))
