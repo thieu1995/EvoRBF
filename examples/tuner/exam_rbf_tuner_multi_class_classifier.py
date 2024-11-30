@@ -51,4 +51,4 @@ model = DfoTuneCfn(problem_type="classification", bounds=my_bounds, cv=3, scorin
 model.fit(data.X_train, data.y_train)
 print(model.best_params)
 print(model.best_estimator)
-print(model.best_estimator.scores(data.X_test, data.y_test, list_methods=("PS", "RS", "NPV", "F1S", "F2S")))
+print(model.best_estimator.scores(data.X_test, data.y_test, list_metrics=("PS", "RS", "NPV", "F1S", "F2S")))
