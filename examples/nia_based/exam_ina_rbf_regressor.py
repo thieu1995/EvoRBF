@@ -6,7 +6,7 @@
 
 import numpy as np
 from sklearn.linear_model import LinearRegression
-from evorbf import Data, InaRbfRegressor
+from evorbf import Data, NiaRbfRegressor
 from sklearn.datasets import load_diabetes
 
 
@@ -28,7 +28,7 @@ data.y_test = scaler_y.transform(np.reshape(data.y_test, (-1, 1)))
 
 ## Create model
 opt_paras = {"name": "WOA", "epoch": 500, "pop_size": 20}
-model = InaRbfRegressor(size_hidden=25, center_finder="kmean", regularization=False, lamda=0.5, obj_name="MSE",
+model = NiaRbfRegressor(size_hidden=25, center_finder="kmean", regularization=False, lamda=0.5, obj_name="MSE",
                         optimizer="BaseGA", optimizer_paras=opt_paras, verbose=True, seed=42)
 
 ## Train the model
@@ -40,7 +40,7 @@ y_pred = model.predict(data.X_test)
 print(model.optimizer.g_best.solution)
 ## Calculate some metrics
 print(model.score(X=data.X_test, y=data.y_test, method="RMSE"))
-print(model.scores(X=data.X_test, y=data.y_test, list_methods=["R2", "R", "KGE", "MAPE"]))
+print(model.scores(X=data.X_test, y=data.y_test, list_metrics=["R2", "R", "KGE", "MAPE"]))
 print(model.evaluate(y_true=data.y_test, y_pred=y_pred, list_metrics=["MSE", "RMSE", "R2S", "NSE", "KGE", "MAPE"]))
 
 
