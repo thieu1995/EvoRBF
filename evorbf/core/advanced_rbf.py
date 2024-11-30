@@ -16,6 +16,68 @@ from evorbf.helpers.scaler import ObjectiveScaler, OneHotEncoder
 
 
 class AdvancedRbfNet:
+    """
+    Implements an advanced Radial Basis Function (RBF) network for supervised learning tasks.
+
+    This class provides a highly customizable RBF network with support for different kernel functions,
+    center-finding strategies, regularization, and optional bias terms. It can be used for both regression
+    and classification problems.
+
+    Attributes:
+        SUPPORT_KERNELS (dict): A dictionary of supported RBF kernel functions and their corresponding implementations.
+            Options include:
+                - "gaussian": Gaussian kernel
+                - "multiquadric": Multiquadric kernel
+                - "inverse_multiquadric": Inverse multiquadric kernel
+                - "linear": Linear kernel
+        SUPPORT_CENTER_FINDERS (dict): A dictionary of supported center-finding methods and their corresponding implementations.
+            Options include:
+                - "random": Random center finder
+                - "kmeans": K-Means clustering
+                - "meanshift": Mean-Shift clustering
+                - "dbscan": DBSCAN clustering
+        reg_lambda (float): L2 regularization strength (default is 0.1). If `reg_lambda=0`, no regularization is applied.
+        has_bias (bool): Whether to include a bias term in the output layer (default is False).
+        seed (int): Random seed for reproducibility.
+        centers (np.ndarray): Array of RBF centers learned during training.
+        sigmas (np.ndarray or None): Width parameters for the RBF functions (if applicable).
+        weights (np.ndarray): Weights of the output layer learned during training.
+        bias (float or None): Bias term learned during training (if `has_bias=True`).
+        n_centers (int): Number of centers learned during training.
+
+    Methods:
+        __init__(center_finder, finder_params, rbf_kernel, kernel_params, reg_lambda, has_bias, seed):
+            Initializes the RBF network with specified configurations for center finding, kernel functions,
+            and regularization.
+        fit(X, y):
+            Fits the RBF network to the given training data and labels.
+        predict(X):
+            Predicts outputs for the given input data using the trained RBF network.
+
+    Args:
+        center_finder (str or CenterFinder): Method for finding RBF centers. Options include strings from `SUPPORT_CENTER_FINDERS`
+            or an instance of a custom `CenterFinder` class. Default is "random".
+        finder_params (dict, optional): Hyperparameters for the center-finding method. Defaults to `{"n_centers": 10}`.
+        rbf_kernel (str or Kernel): RBF kernel function to use. Options include strings from `SUPPORT_KERNELS`
+            or an instance of a custom `Kernel` class. Default is "gaussian".
+        kernel_params (dict, optional): Hyperparameters for the RBF kernel function. Default is `None`.
+        reg_lambda (float): L2 regularization strength. Default is 0.1.
+        has_bias (bool): Whether to include a bias term in the output layer. Default is False.
+        seed (int): Random seed for reproducibility. Default is 42.
+
+    Raises:
+        ValueError: If an unsupported center-finding or kernel method is provided.
+        ValueError: If `reg_lambda` is not a float or `None`.
+
+    Example:
+        >>> import numpy as np
+        >>> from evorbf import AdvancedRbfNet
+        >>> X = np.random.rand(100, 2)
+        >>> y = np.sin(X[:, 0]) + np.cos(X[:, 1])
+        >>> rbf_net = AdvancedRbfNet(center_finder="kmeans", rbf_kernel="gaussian", reg_lambda=0.01, has_bias=True)
+        >>> rbf_net.fit(X, y)
+        >>> predictions = rbf_net.predict(X)
+    """
 
     SUPPORT_KERNELS = {
         "gaussian": "GaussianKernel",
@@ -32,11 +94,9 @@ class AdvancedRbfNet:
     }
 
     def __init__(self, center_finder="random", finder_params=None,
-                 rbf_kernel="gaussian", kernel_params=None,
-                 reg_lambda=0.1, has_bias=False, seed=42):
+                 rbf_kernel="gaussian", kernel_params=None, reg_lambda=0.1, has_bias=False, seed=42):
         """
         Args:
-            # n_centers: Number of RBF centers (The hidden size)
             center_finder: A string ("random" or "kmeans") or an instance of CenterFinder.
             finder_params: A dictionary of hyperparameters for center finder method. (Default: n_centers=10)
             rbf_kernel: A string ("gaussian", "multiquadric", etc.) or an instance of Kernel.
@@ -45,7 +105,6 @@ class AdvancedRbfNet:
             has_bias: Set up the bias in output layer or not.
             seed: The random seed value for reproducibility.
         """
-        # self.n_centers = n_centers
         self.reg_lambda = reg_lambda
         self.has_bias = has_bias
         self.seed = seed
@@ -127,26 +186,44 @@ class AdvancedRbfNet:
 
 class BaseAdvancedRbf(BaseEstimator):
     """
-    Defines the most general class for RBF network that inherits the BaseEstimator class of Scikit-Learn library.
+    This class serves as a wrapper for an advanced Radial Basis Function (RBF) network, providing utility
+    methods for training, evaluating, and saving the model and its associated data. It extends the `BaseEstimator` class.
 
-    Parameters
-    ----------
-    size_hidden : int, default=10
-        The number of hidden nodes
+    Attributes:
+        SUPPORTED_CLS_METRICS (dict): Supported classification metrics, obtained from `get_all_classification_metrics`.
+        SUPPORTED_REG_METRICS (dict): Supported regression metrics, obtained from `get_all_regression_metrics`.
+        CLS_OBJ_LOSSES (list): Classification objective losses (defined by the user or inherited from subclasses).
 
-    center_finder : str, default="kmean"
-        The method is used to find the cluster centers
+    Methods:
+        __init__: Initializes the RBF network with specified configurations.
+        fit: Fits the RBF network to the given training data.
+        predict: Predicts outputs for the provided input data using the trained RBF network.
+        predict_proba: Predicts probabilities for classification tasks (if applicable).
+        evaluate: Evaluates the model's predictions against true values using specified metrics.
+        score: Computes a primary score (e.g., accuracy for classification or R² for regression) for the provided data.
+        scores: Computes multiple metrics for the provided data.
+        save_loss_train: Saves the training loss history to a CSV file.
+        save_metrics: Saves computed evaluation metrics to a CSV file.
+        save_y_predicted: Saves true and predicted values to a CSV file.
+        save_model: Saves the model to a pickle file.
+        load_model: Loads a model from a pickle file.
 
-    sigmas : float, default=2.0
-        The sigma values that are used in Gaussian function. In traditional RBF model, 1 sigma value is used
-        for all of hidden nodes. But in Nature-inspired Algorithms (NIAs) based RBF model, each
-        sigma is assigned to 1 hidden node.
+    Private Methods:
+        __evaluate_reg: Evaluates regression metrics for given true and predicted values.
+        __evaluate_cls: Evaluates classification metrics for given true and predicted values.
+        __score_reg: Computes a regression score (e.g., R²) for the given data.
+        __scores_reg: Computes multiple regression metrics for the given data.
+        __score_cls: Computes a classification score (e.g., accuracy) for the given data.
+        __scores_cls: Computes multiple classification metrics for the given data.
 
-    lamda : float, default=0.01
-        The lamda value is used in regularization term
-
-    seed : int, default=None
-        The seed value is used for reproducibility.
+    Parameters for Initialization:
+        center_finder (str): Method for finding RBF centers (default: "random").
+        finder_params (dict or None): Parameters for the center-finding method (default: None).
+        rbf_kernel (str): Type of RBF kernel to use (default: "gaussian").
+        kernel_params (dict or None): Parameters for the RBF kernel (default: None).
+        reg_lambda (float): Regularization parameter (default: 0.1).
+        has_bias (bool): Whether to include a bias term in the model (default: False).
+        seed (int): Random seed for reproducibility (default: 42).
     """
 
     SUPPORTED_CLS_METRICS = get_all_classification_metrics()
@@ -254,7 +331,29 @@ class BaseAdvancedRbf(BaseEstimator):
 
 class AdvancedRbfRegressor(BaseAdvancedRbf, RegressorMixin):
     """
-    Defines the RBF model for Regression problems that inherit the BaseRbf and RegressorMixin classes.
+    This class implements an advanced Radial Basis Function (RBF) model tailored for regression problems.
+    It extends the `BaseAdvancedRbf` and `RegressorMixin` classes, providing additional methods specific to regression tasks.
+
+    Methods:
+        __init__: Initializes the RBF regressor with specified configurations.
+        fit: Fits the RBF network to the given training data and target values.
+        score: Computes the R² score for the given test data and true values.
+        scores: Computes multiple regression metrics for the given test data and true values.
+        evaluate: Evaluates regression metrics for provided true and predicted values.
+
+    Parameters for Initialization:
+        center_finder (str): Method for finding RBF centers (default: "random").
+        finder_params (dict or None): Parameters for the center-finding method (default: None).
+        rbf_kernel (str): Type of RBF kernel to use (default: "gaussian").
+        kernel_params (dict or None): Parameters for the RBF kernel (default: None).
+        reg_lambda (float): Regularization parameter (default: 0.1).
+        has_bias (bool): Whether to include a bias term in the model (default: False).
+        seed (int): Random seed for reproducibility (default: 42).
+
+    Usage:
+        1. Instantiate the class with desired parameters.
+        2. Use the `fit` method to train the model on input features `X` and targets `y`.
+        3. Use `score`, `scores`, or `evaluate` to assess the model's performance.
     """
 
     def __init__(self, center_finder="random", finder_params=None,
@@ -280,20 +379,54 @@ class AdvancedRbfRegressor(BaseAdvancedRbf, RegressorMixin):
         return self
 
     def score(self, X, y):
-        """Return the metric of the prediction.
+        """
+        Return the R2 squared on the given test data and y_true.
         """
         return self._BaseAdvancedRbf__score_reg(X, y)
 
     def scores(self, X, y, list_metrics=("MSE", "MAE")):
+        """
+        Return the list of regression metrics on the given test data and y_true.
+        """
         return self._BaseAdvancedRbf__scores_reg(X, y, list_metrics)
 
     def evaluate(self, y_true, y_pred, list_metrics=("MSE", "MAE")):
+        """
+        Return the list of regression metrics on the given test data and y_true.
+        """
         return self._BaseAdvancedRbf__evaluate_reg(y_true, y_pred, list_metrics)
 
 
 class AdvancedRbfClassifier(BaseAdvancedRbf, ClassifierMixin):
     """
-    Defines the general class of Metaheuristic-based RBF model for Classification problems that inherit the BaseRbf and ClassifierMixin classes.
+    This class implements an advanced Radial Basis Function (RBF) model specifically designed for
+    classification tasks. It extends the `BaseAdvancedRbf` and `ClassifierMixin` classes, adding
+    functionality for handling classification-specific metrics and data processing.
+
+    Attributes:
+        CLS_OBJ_LOSSES (list): A list of classification objective loss functions supported by the model, such as "CEL", "HL", "KLDL", and "BSL".
+        n_labels (int): The number of unique labels in the target data.
+
+    Methods:
+        __init__: Initializes the RBF classifier with specified configurations.
+        fit: Trains the RBF network using the input features `X` and target labels `y`.
+        score: Computes the accuracy score for the given test data and true labels.
+        scores: Computes a list of classification metrics for the given test data and true labels.
+        evaluate: Evaluates classification metrics for the provided true and predicted labels.
+
+    Parameters for Initialization:
+        center_finder (str): Method for finding RBF centers (default: "random").
+        finder_params (dict or None): Parameters for the center-finding method (default: None).
+        rbf_kernel (str): Type of RBF kernel to use (default: "gaussian").
+        kernel_params (dict or None): Parameters for the RBF kernel (default: None).
+        reg_lambda (float): Regularization parameter (default: 0.1).
+        has_bias (bool): Whether to include a bias term in the model (default: False).
+        seed (int): Random seed for reproducibility (default: 42).
+
+    Usage:
+        1. Instantiate the class with desired parameters.
+        2. Use the `fit` method to train the model on input features `X` and target labels `y`.
+        3. Use `score`, `scores`, or `evaluate` to assess the model's performance.
     """
 
     CLS_OBJ_LOSSES = ["CEL", "HL", "KLDL", "BSL"]
@@ -323,18 +456,18 @@ class AdvancedRbfClassifier(BaseAdvancedRbf, ClassifierMixin):
 
     def score(self, X, y):
         """
-        Return the metric on the given test data and labels.
+        Return the accuracy score on the given test data and labels.
         """
         return self._BaseAdvancedRbf__score_cls(X, y)
 
     def scores(self, X, y, list_metrics=("AS", "RS")):
         """
-        Return the list of metrics on the given test data and labels.
+        Return the list of classification metrics on the given test data and labels.
         """
         return self._BaseAdvancedRbf__scores_cls(X, y, list_metrics)
 
     def evaluate(self, y_true, y_pred, list_metrics=("AS", "RS")):
         """
-        Return the list of performance metrics on the given test data and labels.
+        Return the list of classification metrics on the given test data and labels.
         """
         return self._BaseAdvancedRbf__evaluate_cls(y_true, y_pred, list_metrics)
