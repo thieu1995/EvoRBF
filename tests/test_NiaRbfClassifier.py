@@ -25,7 +25,7 @@ def test_classifier_initialization():
                              optim="BaseGA", optim_paras={"epoch": 30, "pop_size": 20})
     assert model.size_hidden == 20
     assert model.center_finder == "kmeans"
-    assert model.regularization == True
+    assert model.regularization is True
     assert model.seed == 42
 
 
