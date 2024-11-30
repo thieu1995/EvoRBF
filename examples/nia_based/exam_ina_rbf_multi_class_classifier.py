@@ -25,18 +25,23 @@ data.y_train, scaler_y = data.encode_label(data.y_train)
 data.y_test = scaler_y.transform(data.y_test)
 
 ## Create model
-opt_paras = {"name": "WOA", "epoch": 100, "pop_size": 30}
-model = NiaRbfClassifier(size_hidden=15, center_finder="kmean", regularization=False, lamda=0.5, obj_name="NPV",
-                        optimizer="OriginalWOA", optimizer_paras=opt_paras, verbose=True, seed=42)
+opt_paras = {"name": "WOA", "epoch": 30, "pop_size": 30}
+print(NiaRbfClassifier.SUPPORTED_CLS_OBJECTIVES)
+model = NiaRbfClassifier(size_hidden=25, center_finder="kmeans", regularization=False, obj_name="NPV",
+                        optim="OriginalWOA", optim_paras=opt_paras, verbose=True, seed=42)
 
 ## Train the model
-model.fit(X=data.X_train, y=data.y_train, lb=-1., ub=1.0)
+model.fit(X=data.X_train, y=data.y_train)
 
 ## Test the model
-y_pred = model.predict(data.X_test, return_prob=True)
+y_pred = model.predict(data.X_test)
+print(y_pred)
+
+y_pred = model.predict_proba(data.X_test)
 print(y_pred)
 
 ## Calculate some metrics
-print(model.score(X=data.X_test, y=data.y_test, method="AS"))
+print(model.score(X=data.X_test, y=data.y_test))
 print(model.scores(X=data.X_test, y=data.y_test, list_metrics=["PS", "RS", "NPV", "F1S", "F2S"]))
 print(model.evaluate(y_true=data.y_test, y_pred=y_pred, list_metrics=["F2S", "CKS", "FBS"]))
+
