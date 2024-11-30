@@ -8,17 +8,17 @@ from typing import Tuple
 import numpy as np
 from permetrics import RegressionMetric, ClassificationMetric
 from sklearn.base import RegressorMixin, ClassifierMixin
-from evorbf.core.base_rbf import BaseInaRbf, CustomRBF
+from evorbf.core.base_rbf import BaseNiaRbf, CustomRBF
 from evorbf.helpers.scaler import ObjectiveScaler, OneHotEncoder
 
 
-class InaRbfRegressor(BaseInaRbf, RegressorMixin):
+class NiaRbfRegressor(BaseNiaRbf, RegressorMixin):
     """
     Defines the general class of Nature-inspired Algorithm-based RBF models for Regression problems.
-    It inherits the BaseInaRbf and RegressorMixin (from scikit-learn library) classes.
+    It inherits the BaseNiaRbf and RegressorMixin (from scikit-learn library) classes.
 
     This class defines the InaRbf regressor model that:
-        + Use INA algorithm to find `sigmas` value and `weights` of output layer.
+        + Use NIA algorithm to find `sigmas` value and `weights` of output layer.
         + use non-linear Gaussian function with `sigma` as standard deviation
         + set up regulation term with hyperparameter `lamda`
 
@@ -27,24 +27,22 @@ class InaRbfRegressor(BaseInaRbf, RegressorMixin):
     size_hidden : int, default=10
         The number of hidden nodes
 
-    center_finder : str, default="kmean"
+    center_finder : str, default="kmeans"
         The method is used to find the cluster centers
 
-    regularization : bool, default=False
-        Set up the regularization or not
-
-    lamda : float, default=0.01
-        The lamda value is used in regularization term
+    regularization : bool, default=True
+        Determine if L2 regularization technique is used or not.
+        If set to True, then the regularization lambda is learned during the training.
 
     obj_name : None or str, default=None
         The name of objective for the problem, also depend on the problem is classification and regression.
 
-    optimizer : str or instance of Optimizer class (from Mealpy library), default = "BaseGA"
+    optim : str or instance of Optimizer class (from Mealpy library), default = "BaseGA"
         The Metaheuristic Algorithm that use to solve the feature selection problem.
         Current supported list, please check it here: https://github.com/thieu1995/mealpy.
         If a custom optimizer is passed, make sure it is an instance of `Optimizer` class.
 
-    optimizer_paras : None or dict of parameter, default=None
+    optim_paras : None or dict of parameter, default=None
         The parameter for the `optimizer` object.
         If `None`, the default parameters of optimizer is used (defined in https://github.com/thieu1995/mealpy.)
         If `dict` is passed, make sure it has at least `epoch` and `pop_size` parameters.
@@ -57,23 +55,23 @@ class InaRbfRegressor(BaseInaRbf, RegressorMixin):
 
     Examples
     --------
-    >>> from evorbf import InaRbfRegressor, Data
+    >>> from evorbf import NiaRbfRegressor, Data
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_samples=200, random_state=1)
     >>> data = Data(X, y)
     >>> data.split_train_test(test_size=0.2, random_state=1)
     >>> opt_paras = {"name": "GA", "epoch": 10, "pop_size": 30}
-    >>> model = InaRbfRegressor(size_hidden=10, center_finder="kmean", regularization=False, lamda=0.01,
+    >>> model = NiaRbfRegressor(size_hidden=10, center_finder="kmeans", regularization=False, lamda=0.01,
     >>>         obj_name=None, optimizer="BaseGA", optimizer_paras=opt_paras, verbose=True, seed=42, obj_weights=None)
     >>> model.fit(data.X_train, data.y_train)
     >>> pred = model.predict(data.X_test)
     >>> print(pred)
     """
 
-    def __init__(self, size_hidden=10, center_finder="kmean", regularization=False, lamda=0.01,
-                 obj_name=None, optimizer="BaseGA", optimizer_paras=None, verbose=True, seed=None, obj_weights=None):
+    def __init__(self, size_hidden=10, center_finder="kmeans", regularization=False,
+                 obj_name=None, optim="BaseGA", optim_paras=None, verbose=True, seed=None, obj_weights=None):
         super().__init__(size_hidden=size_hidden, center_finder=center_finder, regularization=regularization,
-                         lamda=lamda, obj_name=obj_name, optimizer=optimizer, optimizer_paras=optimizer_paras, verbose=verbose, seed=seed)
+                         obj_name=obj_name, optim=optim, optim_paras=optim_paras, verbose=verbose, seed=seed)
         self.obj_weights = obj_weights
 
     def create_network(self, X, y):
@@ -96,7 +94,10 @@ class InaRbfRegressor(BaseInaRbf, RegressorMixin):
             else:
                 raise TypeError("Invalid obj_weights array type, it should be list, tuple or np.ndarray")
         obj_scaler = ObjectiveScaler(obj_name="self", ohe_scaler=None)
-        network = self._net_class(size_hidden=self.size_hidden, center_finder=self.center_finder, lamda=self.lamda)
+        if self.regularization:
+            network = self._net_class(size_hidden=self.size_hidden, center_finder=self.center_finder, seed=self.seed)
+        else:
+            network = self._net_class(self.size_hidden, self.center_finder, reg_lambda=0, seed=self.seed)
         return network, obj_scaler
 
     def objective_function(self, solution=None):
@@ -117,8 +118,8 @@ class InaRbfRegressor(BaseInaRbf, RegressorMixin):
         loss_train = RegressionMetric(self.y_temp, y_pred).get_metric_by_name(self.obj_name)[self.obj_name]
         return loss_train
 
-    def score(self, X, y, method="RMSE"):
-        """Return the metric of the prediction.
+    def score(self, X, y):
+        """Return the R2S metric of the prediction.
 
         Parameters
         ----------
@@ -129,15 +130,12 @@ class InaRbfRegressor(BaseInaRbf, RegressorMixin):
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             True values for `X`.
 
-        method : str, default="RMSE"
-            You can get all of the metrics from Permetrics library: https://github.com/thieu1995/permetrics
-
         Returns
         -------
         result : float
             The result of selected metric
         """
-        return self._BaseRbf__score_reg(X, y, method)
+        return self._BaseRbf__score_reg(X, y)
 
     def scores(self, X, y, list_metrics=("MSE", "MAE")):
         """Return the list of metrics of the prediction.
@@ -152,7 +150,7 @@ class InaRbfRegressor(BaseInaRbf, RegressorMixin):
             True values for `X`.
 
         list_metrics : list, default=("MSE", "MAE")
-            You can get all of the metrics from Permetrics library: https://github.com/thieu1995/permetrics
+            You can get all metrics from Permetrics library: https://github.com/thieu1995/permetrics
 
         Returns
         -------
@@ -183,13 +181,13 @@ class InaRbfRegressor(BaseInaRbf, RegressorMixin):
         return self._BaseRbf__evaluate_reg(y_true, y_pred, list_metrics)
 
 
-class InaRbfClassifier(BaseInaRbf, ClassifierMixin):
+class NiaRbfClassifier(BaseNiaRbf, ClassifierMixin):
     """
     Defines the general class of Nature-inspired Algorithm-based RBF models for Classification problems.
-    It inherits the BaseInaRbf and ClassifierMixin (from scikit-learn library) classes.
+    It inherits the BaseNiaRbf and ClassifierMixin (from scikit-learn library) classes.
 
     This class defines the InaRbf classifier model that:
-        + Use INA algorithm to find `sigmas` value and `weights` of output layer.
+        + Use NIA algorithm to find `sigmas` value and `weights` of output layer.
         + use non-linear Gaussian function with `sigma` as standard deviation
         + set up regulation term with hyperparameter `lamda`
 
@@ -198,24 +196,22 @@ class InaRbfClassifier(BaseInaRbf, ClassifierMixin):
     size_hidden : int, default=10
         The number of hidden nodes
 
-    center_finder : str, default="kmean"
+    center_finder : str, default="kmeans"
         The method is used to find the cluster centers
 
-    regularization : bool, default=False
-        Set up the regularization or not
-
-    lamda : float, default=0.01
-        The lamda value is used in regularization term
+    regularization : bool, default=True
+        Determine if L2 regularization technique is used or not.
+        If set to True, then the regularization lambda is learned during the training.
 
     obj_name : None or str, default=None
         The name of objective for the problem, also depend on the problem is classification and regression.
 
-    optimizer : str or instance of Optimizer class (from Mealpy library), default = "BaseGA"
+    optim : str or instance of Optimizer class (from Mealpy library), default = "BaseGA"
         The Metaheuristic Algorithm that use to solve the feature selection problem.
         Current supported list, please check it here: https://github.com/thieu1995/mealpy.
         If a custom optimizer is passed, make sure it is an instance of `Optimizer` class.
 
-    optimizer_paras : None or dict of parameter, default=None
+    optim_paras : None or dict of parameter, default=None
         The parameter for the `optimizer` object.
         If `None`, the default parameters of optimizer is used (defined in https://github.com/thieu1995/mealpy.)
         If `dict` is passed, make sure it has at least `epoch` and `pop_size` parameters.
@@ -228,15 +224,15 @@ class InaRbfClassifier(BaseInaRbf, ClassifierMixin):
 
     Examples
     --------
-    >>> from evorbf import Data, InaRbfClassifier
+    >>> from evorbf import Data, NiaRbfClassifier
     >>> from sklearn.datasets import make_classification
     >>> X, y = make_classification(n_samples=100, random_state=1)
     >>> data = Data(X, y)
     >>> data.split_train_test(test_size=0.2, random_state=1)
     >>> opt_paras = {"name": "WOA", "epoch": 100, "pop_size": 30}
-    >>> print(InaRbfClassifier.SUPPORTED_CLS_OBJECTIVES)
-    >>> model = InaRbfClassifier(size_hidden=25, center_finder="kmean", regularization=False, lamda=0.5, obj_name="AS",
-    >>>             optimizer="OriginalWOA", optimizer_paras=opt_paras, verbose=True, seed=42)
+    >>> print(NiaRbfClassifier.SUPPORTED_CLS_OBJECTIVES)
+    >>> model = NiaRbfClassifier(size_hidden=25, center_finder="kmeans", regularization=False, obj_name="AS",
+    >>>             optim="OriginalWOA", optim_paras=opt_paras, verbose=True, seed=42)
     >>> model.fit(data.X_train, data.y_train)
     >>> pred = model.predict(data.X_test)
     >>> print(pred)
@@ -245,10 +241,10 @@ class InaRbfClassifier(BaseInaRbf, ClassifierMixin):
 
     CLS_OBJ_LOSSES = ["CEL", "HL", "KLDL", "BSL"]
 
-    def __init__(self, size_hidden=10, center_finder="kmean", regularization=False, lamda=0.01,
-                 obj_name=None, optimizer="BaseGA", optimizer_paras=None, verbose=True, seed=None, obj_weights=None):
+    def __init__(self, size_hidden=10, center_finder="kmeans", regularization=False,
+                 obj_name=None, optim="BaseGA", optim_paras=None, verbose=True, seed=None, obj_weights=None):
         super().__init__(size_hidden=size_hidden, center_finder=center_finder, regularization=regularization,
-                         lamda=lamda, obj_name=obj_name, optimizer=optimizer, optimizer_paras=optimizer_paras, verbose=verbose, seed=seed)
+                         obj_name=obj_name, optim=optim, optim_paras=optim_paras, verbose=verbose, seed=seed)
         self.return_prob = False
         self.n_labels = None
         self.obj_weights = obj_weights
@@ -269,8 +265,10 @@ class InaRbfClassifier(BaseInaRbf, ClassifierMixin):
         ohe_scaler = OneHotEncoder()
         ohe_scaler.fit(np.reshape(y, (-1, 1)))
         obj_scaler = ObjectiveScaler(obj_name="softmax", ohe_scaler=ohe_scaler)
-        network = self._net_class(size_hidden=self.size_hidden, center_finder=self.center_finder,
-                                  regularization=self.regularization, lamda=self.lamda, seed=self.seed)
+        if self.regularization:
+            network = self._net_class(size_hidden=self.size_hidden, center_finder=self.center_finder, seed=self.seed)
+        else:
+            network = self._net_class(self.size_hidden, self.center_finder, reg_lambda=0, seed=self.seed)
         return network, obj_scaler
 
     def objective_function(self, solution=None):
@@ -287,14 +285,17 @@ class InaRbfClassifier(BaseInaRbf, ClassifierMixin):
             The fitness value
         """
         self.network.update_weights_from_solution(solution, self.X_temp, self.y_temp)
-        y_pred = self.predict(self.X_temp, return_prob=self.return_prob)
+        if self.return_prob:
+            y_pred = self.predict_proba(self.X_temp)
+        else:
+            y_pred = self.predict(self.X_temp)
         y1 = self.obj_scaler.inverse_transform(self.y_temp)
         loss_train = ClassificationMetric(y1, y_pred).get_metric_by_name(self.obj_name)[self.obj_name]
         return loss_train
 
-    def score(self, X, y, method="AS"):
+    def score(self, X, y):
         """
-        Return the metric on the given test data and labels.
+        Return the accuracy score on the given test data and labels.
 
         In multi-label classification, this is the subset accuracy which is a harsh metric
         since you require for each sample that each label set be correctly predicted.
@@ -307,15 +308,12 @@ class InaRbfClassifier(BaseInaRbf, ClassifierMixin):
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             True labels for `X`.
 
-        method : str, default="AS"
-            You can get all of the metrics from Permetrics library: https://github.com/thieu1995/permetrics
-
         Returns
         -------
         result : float
             The result of selected metric
         """
-        return self._BaseRbf__score_cls(X, y, method)
+        return self._BaseRbf__score_cls(X, y)
 
     def scores(self, X, y, list_metrics=("AS", "RS")):
         """
@@ -333,7 +331,7 @@ class InaRbfClassifier(BaseInaRbf, ClassifierMixin):
             True labels for `X`.
 
         list_metrics : list, default=("AS", "RS")
-            You can get all of the metrics from Permetrics library: https://github.com/thieu1995/permetrics
+            You can get all metrics from Permetrics library: https://github.com/thieu1995/permetrics
 
         Returns
         -------
