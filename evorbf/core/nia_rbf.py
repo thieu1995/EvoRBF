@@ -19,39 +19,66 @@ class NiaRbfRegressor(BaseNiaRbf, RegressorMixin):
 
     This class defines the InaRbf regressor model that:
         + Use NIA algorithm to find `sigmas` value and `weights` of output layer.
-        + use non-linear Gaussian function with `sigma` as standard deviation
-        + set up regulation term with hyperparameter `lamda`
+        + use non-linear Gaussian function with `sigmas` as standard deviation
+        + set up regulation term with hyperparameter `regularization`
+
+    Inherits
+    --------
+    BaseNiaRbf : The base class for NIA-based RBF networks.
+    RegressorMixin : Scikit-learn mixin class for regression estimators.
 
     Parameters
     ----------
     size_hidden : int, default=10
         The number of hidden nodes
-
     center_finder : str, default="kmeans"
         The method is used to find the cluster centers
-
     regularization : bool, default=True
         Determine if L2 regularization technique is used or not.
         If set to True, then the regularization lambda is learned during the training.
-
     obj_name : None or str, default=None
         The name of objective for the problem, also depend on the problem is classification and regression.
-
     optim : str or instance of Optimizer class (from Mealpy library), default = "BaseGA"
         The Metaheuristic Algorithm that use to solve the feature selection problem.
         Current supported list, please check it here: https://github.com/thieu1995/mealpy.
         If a custom optimizer is passed, make sure it is an instance of `Optimizer` class.
-
     optim_paras : None or dict of parameter, default=None
         The parameter for the `optimizer` object.
         If `None`, the default parameters of optimizer is used (defined in https://github.com/thieu1995/mealpy.)
         If `dict` is passed, make sure it has at least `epoch` and `pop_size` parameters.
-
     verbose : bool, default=True
         Whether to print progress messages to stdout.
-
     seed : int, default=None
         The seed value is used for reproducibility.
+
+    Attributes
+    ----------
+    network : object
+        The RBF network instance created during training.
+    obj_weights : array-like
+        Weights assigned to output objectives for multi-objective tasks.
+    X_temp : array-like
+        Training input data temporarily stored during optimization.
+    y_temp : array-like
+        Training output data temporarily stored during optimization.
+
+    Methods
+    -------
+    fit(X, y)
+        Fit the NIA-RBF model to the training data.
+    predict(X)
+        Predict regression outputs for the given input data.
+    score(X, y)
+        Return the R2 score for the model predictions on the given data.
+    scores(X, y, list_metrics=("MSE", "MAE"))
+        Calculate and return a dictionary of performance metrics for the given data.
+    evaluate(y_true, y_pred, list_metrics=("MSE", "MAE"))
+        Evaluate and return a dictionary of performance metrics for the provided true
+        and predicted labels.
+    objective_function(solution=None)
+        Evaluate the fitness function for regression metrics using the given solution.
+    create_network(X, y)
+        Initialize and configure the RBF network structure based on the input data.
 
     Examples
     --------
@@ -66,6 +93,13 @@ class NiaRbfRegressor(BaseNiaRbf, RegressorMixin):
     >>> model.fit(data.X_train, data.y_train)
     >>> pred = model.predict(data.X_test)
     >>> print(pred)
+
+    Notes
+    -----
+    - This class requires the `Mealpy` library for the metaheuristic optimization algorithms.
+      More details and supported optimizers can be found at: https://github.com/thieu1995/mealpy.
+    - For metrics, the `Permetrics` library is recommended: https://github.com/thieu1995/permetrics.
+
     """
 
     def __init__(self, size_hidden=10, center_finder="kmeans", regularization=False,
@@ -188,37 +222,30 @@ class NiaRbfClassifier(BaseNiaRbf, ClassifierMixin):
 
     This class defines the InaRbf classifier model that:
         + Use NIA algorithm to find `sigmas` value and `weights` of output layer.
-        + use non-linear Gaussian function with `sigma` as standard deviation
-        + set up regulation term with hyperparameter `lamda`
+        + use non-linear Gaussian function with `sigmas` as standard deviation
+        + set up regulation term with hyperparameter `regularization`
 
     Parameters
     ----------
     size_hidden : int, default=10
         The number of hidden nodes
-
     center_finder : str, default="kmeans"
         The method is used to find the cluster centers
-
     regularization : bool, default=True
         Determine if L2 regularization technique is used or not.
         If set to True, then the regularization lambda is learned during the training.
-
     obj_name : None or str, default=None
         The name of objective for the problem, also depend on the problem is classification and regression.
-
     optim : str or instance of Optimizer class (from Mealpy library), default = "BaseGA"
         The Metaheuristic Algorithm that use to solve the feature selection problem.
         Current supported list, please check it here: https://github.com/thieu1995/mealpy.
         If a custom optimizer is passed, make sure it is an instance of `Optimizer` class.
-
     optim_paras : None or dict of parameter, default=None
         The parameter for the `optimizer` object.
         If `None`, the default parameters of optimizer is used (defined in https://github.com/thieu1995/mealpy.)
         If `dict` is passed, make sure it has at least `epoch` and `pop_size` parameters.
-
     verbose : bool, default=True
         Whether to print progress messages to stdout.
-
     seed : int, default=None
         The seed value is used for reproducibility.
 
