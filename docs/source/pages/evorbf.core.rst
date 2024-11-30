@@ -1,6 +1,15 @@
 evorbf.core package
 ===================
 
+
+evorbf.core.advanced\_rbf module
+--------------------------------
+
+.. automodule:: evorbf.core.advanced_rbf
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 evorbf.core.base\_rbf module
 ----------------------------
 
@@ -9,10 +18,10 @@ evorbf.core.base\_rbf module
    :undoc-members:
    :show-inheritance:
 
-evorbf.core.ina\_rbf module
+evorbf.core.nia\_rbf module
 ---------------------------
 
-.. automodule:: evorbf.core.ina_rbf
+.. automodule:: evorbf.core.nia_rbf
    :members:
    :undoc-members:
    :show-inheritance:

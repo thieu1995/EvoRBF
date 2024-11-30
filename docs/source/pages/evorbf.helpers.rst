@@ -2,6 +2,22 @@ evorbf.helpers package
 ======================
 
 
+evorbf.helpers.center\_finder module
+------------------------------------
+
+.. automodule:: evorbf.helpers.center_finder
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+evorbf.helpers.kernel module
+----------------------------
+
+.. automodule:: evorbf.helpers.kernel
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 evorbf.helpers.metrics module
 -----------------------------
 
