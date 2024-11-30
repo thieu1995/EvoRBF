@@ -16,7 +16,7 @@ from evorbf.helpers import validator
 from evorbf.helpers.metrics import get_all_regression_metrics, get_all_classification_metrics
 
 
-class RBF:
+class CustomRBF:
     """Radial Basis Function
 
     This class defines the general RBF model that:
@@ -29,35 +29,45 @@ class RBF:
     size_hidden : int, default=10
         The number of hidden nodes
 
-    center_finder : str, default="kmean"
+    center_finder : str, default="kmeans"
         The method is used to find the cluster centers
 
-    sigmas : float, default=2.0
+    sigmas : float, int, np.ndarray, list, tuple, default=2.0
         The sigma values that are used in Gaussian function. In traditional RBF model, 1 sigma value is used
         for all of hidden nodes. But in Nature-inspired Algorithms (NIAs) based RBF model, each
         sigma is assigned to 1 hidden node.
 
-    regularization : bool, default=False
-        Set up the regularization or not
-
-    lamda : float, default=0.01
-        The lamda value is used in regularization term
+    reg_lambda : float, default=0.1
+        The lamda value is used in regularization term. If set to 0, then no L2 is applied
 
     seed : int, default=None
         The seed value is used for reproducibility.
     """
-    def __init__(self, size_hidden=10, center_finder="kmean", sigmas=2.0, regularization=False, lamda=0.01, seed=None):
+    def __init__(self, size_hidden=10, center_finder="kmeans", sigmas=2.0, reg_lambda=0.1, seed=None):
         self.size_hidden = size_hidden
         self.center_finder = center_finder
         self.sigmas = sigmas
-        self.regularization = regularization
-        self.lamda = lamda
+        self.reg_lambda = reg_lambda
         self.seed = seed
         self.centers, self.weights, self.weights_shape = None, None, None
+        self.regularization = None
+
+    def check_reg_lambda(self, reg_lambda):
+        if type(reg_lambda) is float and reg_lambda > 0.0:
+            return reg_lambda, True
+        else:
+            return reg_lambda, False
+
+    def set_reg_lambda(self, reg_lambda):
+        if type(reg_lambda) is float and reg_lambda > 0.0:
+            self.reg_lambda = reg_lambda
+            self.regularization = True
+        else:
+            self.reg_lambda, self.regularization = reg_lambda, False
 
     @staticmethod
-    def calculate_centers(X, method="kmean", n_clusters=5, seed=42):
-        if method == "kmean":
+    def calculate_centers(X, method="kmeans", n_clusters=5, seed=42):
+        if method == "kmeans":
             kobj = KMeans(n_clusters=n_clusters, n_init='auto', random_state=seed).fit(X)
             return kobj.cluster_centers_
         elif method == "random":
@@ -65,17 +75,19 @@ class RBF:
             return X[generator.choice(len(X), n_clusters, replace=False)]
 
     @staticmethod
-    def calculate_rbf(X, c, sigmas):
+    def calculate_rbf(X, c, sigma):
         # Calculate Radial Basis Function (Gaussian)
-        return np.exp(-np.sum((X - c)**2, axis=1) / (2 * sigmas**2))
+        # return np.exp(-np.sum((X - c)**2, axis=1) / (2 * sigmas**2))
+        return np.exp(-np.linalg.norm(X - c, axis=1)**2 / (2 * sigma**2))
 
     def transform_X(self, X):
         # Calculate RBF layer outputs
         if self.centers is None:
             raise Exception("Model is not trained yet.")
+        # Construct the RBF matrix
         rbf_layer = np.zeros((X.shape[0], self.size_hidden))
-        for i in range(X.shape[0]):
-            rbf_layer[i] = self.calculate_rbf(X[i], self.centers, self.sigmas)
+        for idx, c in enumerate(self.centers):
+            rbf_layer[:, idx] = self.calculate_rbf(X, c, self.sigmas[idx])
         return rbf_layer
 
     def fit(self, X, y):
@@ -94,14 +106,24 @@ class RBF:
         self : object
             Returns a trained RBF core.
         """
+        # Check regularization
+        self.reg_lambda, self.regularization = self.check_reg_lambda(self.reg_lambda)
+        # Check sigmas
+        if isinstance(self.sigmas, (int, float, np.number)):
+            self.sigmas = [self.sigmas, ] * self.size_hidden
+        elif isinstance(self.sigmas, (list, tuple, np.ndarray)):
+            if len(self.sigmas) != self.size_hidden:
+                raise ValueError("sigmas must have equal length to size_hidden")
+        else:
+            raise ValueError("sigmas must be an number or list, tuple, or number array")
         # Initialize centers
         self.centers = self.calculate_centers(X, self.center_finder, self.size_hidden, self.seed)
         # Calculate RBF layer outputs
         rbf_layer = self.transform_X(X)
         if self.regularization:
             # Solve for weights using ridge regression (L2 regularization)
-            iden = np.identity(self.size_hidden)
-            self.weights = np.linalg.inv(rbf_layer.T @ rbf_layer + self.lamda * iden) @ rbf_layer.T @ y
+            lambda_iden = self.reg_lambda * np.eye(rbf_layer.shape[1])  # L2 regularization
+            self.weights = np.linalg.inv(rbf_layer.T @ rbf_layer + lambda_iden) @ rbf_layer.T @ y
         else:
             # Solve for weights using pseudo-inverse
             self.weights = np.linalg.pinv(rbf_layer) @ y
@@ -125,17 +147,22 @@ class RBF:
     
     def update_weights_from_solution(self, solution, X, y):
         """
-        This function is used for INA-based RBF model. Whenever a solution is generated, it will call this function.
+        This function is used for NIA-based RBF model. Whenever a solution is generated, it will call this function.
         """
         if self.centers is None:
             self.centers = self.calculate_centers(X, self.center_finder, self.size_hidden, self.seed)
-        if self.weights_shape is None:
-            if y.ndim == 1:
-                self.weights_shape = (self.size_hidden, 1)
-            else:
-                self.weights_shape = (self.size_hidden, y.shape[1])
-        self.sigmas = solution[:self.size_hidden]
-        self.weights = np.reshape(solution[self.size_hidden:], self.weights_shape)
+        if self.regularization:
+            self.sigmas = solution[:self.size_hidden]
+            self.reg_lambda = solution[-1]
+            rbf_layer = self.transform_X(X)
+            # Solve for weights using ridge regression (L2 regularization)
+            lambda_iden = self.reg_lambda * np.eye(rbf_layer.shape[1])  # L2 regularization
+            self.weights = np.linalg.inv(rbf_layer.T @ rbf_layer + lambda_iden) @ rbf_layer.T @ y
+        else:
+            self.sigmas = solution
+            rbf_layer = self.transform_X(X)
+            # Solve for weights using pseudo-inverse
+            self.weights = np.linalg.pinv(rbf_layer) @ y
     
     def get_weights(self):
         return self.weights
@@ -156,7 +183,7 @@ class BaseRbf(BaseEstimator):
     size_hidden : int, default=10
         The number of hidden nodes
 
-    center_finder : str, default="kmean"
+    center_finder : str, default="kmeans"
         The method is used to find the cluster centers
 
     sigmas : float, default=2.0
@@ -164,11 +191,8 @@ class BaseRbf(BaseEstimator):
         for all of hidden nodes. But in Nature-inspired Algorithms (NIAs) based RBF model, each
         sigma is assigned to 1 hidden node.
 
-    regularization : bool, default=False
-        Set up the regularization or not
-
-    lamda : float, default=0.01
-        The lamda value is used in regularization term
+    reg_lambda : float, default=0.1
+        The lamda value is used in regularization term. If set to 0, then no L2 is applied
 
     seed : int, default=None
         The seed value is used for reproducibility.
@@ -178,14 +202,13 @@ class BaseRbf(BaseEstimator):
     SUPPORTED_REG_METRICS = get_all_regression_metrics()
     CLS_OBJ_LOSSES = None
 
-    def __init__(self, size_hidden=10, center_finder="kmean", sigmas=2.0, regularization=False, lamda=0.01, seed=None):
+    def __init__(self, size_hidden=10, center_finder="kmeans", sigmas=2.0, reg_lambda=0.1, seed=None):
         super().__init__()
-        self._net_class = RBF
+        self._net_class = CustomRBF
         self.size_hidden = size_hidden
         self.center_finder = center_finder
         self.sigmas = sigmas
-        self.regularization = regularization
-        self.lamda = lamda
+        self.reg_lambda = reg_lambda
         self.seed = seed
         self.parameters = {}
         self.network, self.obj_scaler, self.loss_train, self.n_labels = None, None, None, None
@@ -206,25 +229,16 @@ class BaseRbf(BaseEstimator):
         self.network.fit(X, y_scaled)
         return self
 
-    def predict(self, X, return_prob=False):
-        """
-        Inherit the predict function from BaseRbf class, with 1 more parameter `return_prob`.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The input data.
-
-        return_prob : bool, default=False
-            It is used for classification problem:
-
-            - If True, the returned results are the probability for each sample
-            - If False, the returned results are the predicted labels
-        """
+    def predict(self, X):
+        """Predict the outcome of the feature X"""
         pred = self.network.predict(X)
-        if return_prob:
-            return pred
         return self.obj_scaler.inverse_transform(pred)
+
+    def predict_proba(self, X):
+        """
+        It is used for classification problem. The returned results are the probability for each sample
+        """
+        return self.network.predict(X)
 
     def __evaluate_reg(self, y_true, y_pred, list_metrics=("MSE", "MAE")):
         rm = RegressionMetric(y_true=y_true, y_pred=y_pred)
@@ -233,103 +247,45 @@ class BaseRbf(BaseEstimator):
     def __evaluate_cls(self, y_true, y_pred, list_metrics=("AS", "RS")):
         cm = ClassificationMetric(y_true, y_pred)
         return cm.get_metrics_by_list_names(list_metrics)
-    
-    def __score_reg(self, X, y, method="RMSE"):
-        method = self._check_method(method, list(self.SUPPORTED_REG_METRICS.keys()))
-        y_pred = self.network.predict(X)
-        return RegressionMetric(y, y_pred).get_metric_by_name(method)[method]
-    
-    def __scores_reg(self, X, y, list_methods=("MSE", "MAE")):
-        y_pred = self.network.predict(X)
-        return self.__evaluate_reg(y_true=y, y_pred=y_pred, list_metrics=list_methods)
 
-    def __score_cls(self, X, y, method="AS"):
-        method = self._check_method(method, list(self.SUPPORTED_CLS_METRICS.keys()))
-        return_prob = False
-        if self.n_labels > 2:
-            if method in self.CLS_OBJ_LOSSES:
-                return_prob = True
-        y_pred = self.predict(X, return_prob=return_prob)
-        cm = ClassificationMetric(y_true=y, y_pred=y_pred)
-        return cm.get_metric_by_name(method)[method]
+    def __score_reg(self, X, y):
+        y_pred = self.network.predict(X)
+        return RegressionMetric().pearson_correlation_coefficient_square(y_true=y, y_pred=y_pred)
 
-    def __scores_cls(self, X, y, list_methods=("AS", "RS")):
-        list_errors = list(set(list_methods) & set(self.CLS_OBJ_LOSSES))
-        list_scores = list((set(self.SUPPORTED_CLS_METRICS.keys()) - set(self.CLS_OBJ_LOSSES)) & set(list_methods))
+    def __scores_reg(self, X, y, list_metrics=("MSE", "MAE")):
+        y_pred = self.network.predict(X)
+        return self.__evaluate_reg(y_true=y, y_pred=y_pred, list_metrics=list_metrics)
+
+    def __score_cls(self, X, y):
+        y_pred = self.predict(X)
+        return ClassificationMetric().accuracy_score(y_true=y, y_pred=y_pred)
+
+    def __scores_cls(self, X, y, list_metrics=("AS", "RS")):
+        list_errors = list(set(list_metrics) & set(self.CLS_OBJ_LOSSES))
+        list_scores = list((set(self.SUPPORTED_CLS_METRICS.keys()) - set(self.CLS_OBJ_LOSSES)) & set(list_metrics))
         t1 = {}
         if len(list_errors) > 0:
-            return_prob = False
             if self.n_labels > 2:
-                return_prob = True
-            y_pred = self.predict(X, return_prob=return_prob)
+                y_pred = self.predict_proba(X)
+            else:
+                y_pred = self.predict(X)
             t1 = self.__evaluate_cls(y_true=y, y_pred=y_pred, list_metrics=list_errors)
-        y_pred = self.predict(X, return_prob=False)
+        y_pred = self.predict(X)
         t2 = self.__evaluate_cls(y_true=y, y_pred=y_pred, list_metrics=list_scores)
         return {**t2, **t1}
 
     def evaluate(self, y_true, y_pred, list_metrics=None):
         """Return the list of performance metrics of the prediction.
-
-        Parameters
-        ----------
-        y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
-            True values for `X`.
-
-        y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
-            Predicted values for `X`.
-
-        list_metrics : list
-            You can get metrics from Permetrics library: https://github.com/thieu1995/permetrics
-
-        Returns
-        -------
-        results : dict
-            The results of the list metrics
+        You can get metrics from Permetrics library: https://github.com/thieu1995/permetrics
         """
         pass
 
-    def score(self, X, y, method=None):
-        """Return the metric of the prediction.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            Test samples. For some estimators this may be a precomputed kernel matrix or a list of generic objects instead with shape
-            ``(n_samples, n_samples_fitted)``, where ``n_samples_fitted`` is the number of samples used in the fitting for the estimator.
-
-        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
-            True values for `X`.
-
-        method : str, default="RMSE"
-            You can get metrics from Permetrics library: https://github.com/thieu1995/permetrics
-
-        Returns
-        -------
-        result : float
-            The result of selected metric
-        """
+    def score(self, X, y):
+        """Return the default metric of the prediction."""
         pass
 
-    def scores(self, X, y, list_methods=None):
-        """Return the list of metrics of the prediction.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            Test samples. For some estimators this may be a precomputed kernel matrix or a list of generic objects instead with shape
-            ``(n_samples, n_samples_fitted)``, where ``n_samples_fitted`` is the number of samples used in the fitting for the estimator.
-
-        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
-            True values for `X`.
-
-        list_methods : list, default=("MSE", "MAE")
-            You can get metrics from Permetrics library: https://github.com/thieu1995/permetrics
-
-        Returns
-        -------
-        results : dict
-            The results of the list metrics
-        """
+    def scores(self, X, y, list_metrics=None):
+        """Return the list of metrics of the prediction."""
         pass
 
     def save_loss_train(self, save_path="history", filename="loss.csv"):
@@ -369,13 +325,13 @@ class BaseRbf(BaseEstimator):
         return pickle.load(open(f"{load_path}/{filename}", 'rb'))
 
 
-class BaseInaRbf(BaseRbf):
+class BaseNiaRbf(BaseRbf):
     """
     Defines the most general class for Nature-inspired Algorithm-based RBF models that inherits the BaseRbf class
 
     Note:
     -----
-        + In this models, the sigmas will be learned during the training process.
+        + In this model, the sigmas will be learned during the training process.
         + So the `sigmas` parameter is removed in the init function.
         + Besides, the `sigmas` is a list of value, each value represent a `sigma` for Gaussian function used in hidden node.
 
@@ -384,24 +340,22 @@ class BaseInaRbf(BaseRbf):
     size_hidden : int, default=10
         The number of hidden nodes
 
-    center_finder : str, default="kmean"
+    center_finder : str, default="kmeans"
         The method is used to find the cluster centers
 
-    regularization : bool, default=False
-        Set up the regularization or not
-
-    lamda : float, default=0.01
-        The lamda value is used in regularization term
+    regularization : bool, default=True
+        Determine if L2 regularization technique is used or not.
+        If set to True, then the regularization lambda is learned during the training.
 
     obj_name : None or str, default=None
         The name of objective for the problem, also depend on the problem is classification and regression.
 
-    optimizer : str or instance of Optimizer class (from Mealpy library), default = "BaseGA"
+    optim : str or instance of Optimizer class (from Mealpy library), default = "BaseGA"
         The Metaheuristic Algorithm that use to solve the feature selection problem.
         Current supported list, please check it here: https://github.com/thieu1995/mealpy.
         If a custom optimizer is passed, make sure it is an instance of `Optimizer` class.
 
-    optimizer_paras : None or dict of parameter, default=None
+    optim_paras : None or dict of parameter, default=None
         The parameter for the `optimizer` object.
         If `None`, the default parameters of optimizer is used (defined in https://github.com/thieu1995/mealpy.)
         If `dict` is passed, make sure it has at least `epoch` and `pop_size` parameters.
@@ -417,60 +371,61 @@ class BaseInaRbf(BaseRbf):
     SUPPORTED_CLS_OBJECTIVES = get_all_classification_metrics()
     SUPPORTED_REG_OBJECTIVES = get_all_regression_metrics()
 
-    def __init__(self, size_hidden=10, center_finder="kmean", regularization=False, lamda=0.01,
-                 obj_name=None, optimizer="BaseGA", optimizer_paras=None, verbose=True, seed=None):
-        super().__init__(size_hidden=size_hidden, center_finder=center_finder,
-                         regularization=regularization, lamda=lamda, seed=seed)
+    def __init__(self, size_hidden=10, center_finder="kmeans", regularization=True,
+                 obj_name=None, optim="BaseGA", optim_paras=None, verbose=True, seed=None):
+        super().__init__(size_hidden=size_hidden, center_finder=center_finder, seed=seed)
+        self.regularization = regularization
         self.obj_name = obj_name
-        self.optimizer_paras = optimizer_paras
-        self.optimizer = self._set_optimizer(optimizer, optimizer_paras)
+        self.optim_paras = optim_paras
+        self.optimizer = self._set_optimizer(optim, optim_paras)
         self.verbose = verbose
         self.network, self.obj_scaler, self.obj_weights = None, None, None
 
-    def _set_optimizer(self, optimizer=None, optimizer_paras=None):
-        if type(optimizer) is str:
-            opt_class = get_optimizer_by_name(optimizer)
-            if type(optimizer_paras) is dict:
-                return opt_class(**optimizer_paras)
+    def _set_optimizer(self, optim=None, optim_paras=None):
+        if type(optim) is str:
+            opt_class = get_optimizer_by_name(optim)
+            if type(optim_paras) is dict:
+                return opt_class(**optim_paras)
             else:
                 return opt_class(epoch=500, pop_size=50)
-        elif isinstance(optimizer, Optimizer):
-            if type(optimizer_paras) is dict:
-                return optimizer.set_parameters(optimizer_paras)
-            return optimizer
+        elif isinstance(optim, Optimizer):
+            if type(optim_paras) is dict:
+                return optim.set_parameters(optim_paras)
+            return optim
         else:
             raise TypeError(f"optimizer needs to set as a string and supported by Mealpy library.")
 
-    def _get_history_loss(self, optimizer=None):
-        list_global_best = optimizer.history.list_global_best
+    def _get_history_loss(self, optim=None):
+        list_global_best = optim.history.list_global_best
         # 2D array / matrix 2D
         return np.array([agent.target.fitness for agent in list_global_best])
 
     def objective_function(self, solution=None):
         pass
 
-    def fit(self, X, y, lb=(-1.0, ), ub=(1.0, ), save_population=False):
+    def fit(self, X, y, lb=None, ub=None, save_population=False):
         self.network, self.obj_scaler = self.create_network(X, y)
         y_scaled = self.obj_scaler.transform(y)
         self.X_temp, self.y_temp = X, y_scaled
-        if y_scaled.ndim == 1:
-            problem_size = self.size_hidden
+        if self.regularization:
+            problem_size = self.size_hidden + 1
         else:
-            problem_size = self.size_hidden * y_scaled.shape[1]
-        ub_sigma = [np.mean(np.max(X, axis=0)), ] * self.size_hidden
-        lb_sigma = [0.01, ] * self.size_hidden
-        if type(lb) in (list, tuple, np.ndarray) and type(ub) in (list, tuple, np.ndarray):
+            problem_size = self.size_hidden
+        if lb is None or ub is None:
+            ub = [np.mean(np.max(X, axis=0)), ] * problem_size
+            lb = [0.001, ] * problem_size
+        elif type(lb) in (list, tuple, np.ndarray) and type(ub) in (list, tuple, np.ndarray):
             if len(lb) == len(ub):
                 if len(lb) == 1:
-                    lb = np.array(lb_sigma + list(lb) * problem_size, dtype=float)
-                    ub = np.array(ub_sigma + list(ub) * problem_size, dtype=float)
+                    lb = lb * problem_size
+                    ub = ub * problem_size
                 elif len(lb) != problem_size:
-                    raise ValueError(f"Invalid lb and ub. Their length should be equal to 1 or problem_size.")
+                    raise ValueError(f"Invalid lb and ub. Their length should equal to 1 or {problem_size}.")
             else:
                 raise ValueError(f"Invalid lb and ub. They should have the same length.")
         elif type(lb) in (int, float) and type(ub) in (int, float):
-            lb = lb_sigma + [float(lb), ] * problem_size
-            ub = ub_sigma + [float(ub), ] * problem_size
+            lb = [lb, ] * problem_size
+            ub = [ub, ] * problem_size
         else:
             raise ValueError(f"Invalid lb and ub. They should be a number of list/tuple/np.ndarray with size equal to problem_size")
         log_to = "console" if self.verbose else "None"
@@ -493,5 +448,5 @@ class BaseInaRbf(BaseRbf):
         }
         self.optimizer.solve(problem, seed=self.seed)
         self.network.update_weights_from_solution(self.optimizer.g_best.solution, X, y_scaled)
-        self.loss_train = self._get_history_loss(optimizer=self.optimizer)
+        self.loss_train = self._get_history_loss(optim=self.optimizer)
         return self

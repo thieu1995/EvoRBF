@@ -8,7 +8,7 @@ from typing import Tuple
 import numpy as np
 from permetrics import RegressionMetric, ClassificationMetric
 from sklearn.base import RegressorMixin, ClassifierMixin
-from evorbf.core.base_rbf import BaseInaRbf, RBF
+from evorbf.core.base_rbf import BaseInaRbf, CustomRBF
 from evorbf.helpers.scaler import ObjectiveScaler, OneHotEncoder
 
 
@@ -139,7 +139,7 @@ class InaRbfRegressor(BaseInaRbf, RegressorMixin):
         """
         return self._BaseRbf__score_reg(X, y, method)
 
-    def scores(self, X, y, list_methods=("MSE", "MAE")):
+    def scores(self, X, y, list_metrics=("MSE", "MAE")):
         """Return the list of metrics of the prediction.
 
         Parameters
@@ -151,7 +151,7 @@ class InaRbfRegressor(BaseInaRbf, RegressorMixin):
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             True values for `X`.
 
-        list_methods : list, default=("MSE", "MAE")
+        list_metrics : list, default=("MSE", "MAE")
             You can get all of the metrics from Permetrics library: https://github.com/thieu1995/permetrics
 
         Returns
@@ -159,7 +159,7 @@ class InaRbfRegressor(BaseInaRbf, RegressorMixin):
         results : dict
             The results of the list metrics
         """
-        return self._BaseRbf__scores_reg(X, y, list_methods)
+        return self._BaseRbf__scores_reg(X, y, list_metrics)
 
     def evaluate(self, y_true, y_pred, list_metrics=("MSE", "MAE")):
         """Return the list of performance metrics of the prediction.
@@ -261,7 +261,7 @@ class InaRbfClassifier(BaseInaRbf, ClassifierMixin):
             raise TypeError("Invalid y array shape, it should be 1D vector containing labels 0, 1, 2,.. and so on.")
         raise TypeError("Invalid y array type, it should be list, tuple or np.ndarray")
 
-    def create_network(self, X, y) -> Tuple[RBF, ObjectiveScaler]:
+    def create_network(self, X, y) -> Tuple[CustomRBF, ObjectiveScaler]:
         self.n_labels = self._check_y(y)
         if self.n_labels > 2:
             if self.obj_name in self.CLS_OBJ_LOSSES:
@@ -317,7 +317,7 @@ class InaRbfClassifier(BaseInaRbf, ClassifierMixin):
         """
         return self._BaseRbf__score_cls(X, y, method)
 
-    def scores(self, X, y, list_methods=("AS", "RS")):
+    def scores(self, X, y, list_metrics=("AS", "RS")):
         """
         Return the list of metrics on the given test data and labels.
 
@@ -332,7 +332,7 @@ class InaRbfClassifier(BaseInaRbf, ClassifierMixin):
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             True labels for `X`.
 
-        list_methods : list, default=("AS", "RS")
+        list_metrics : list, default=("AS", "RS")
             You can get all of the metrics from Permetrics library: https://github.com/thieu1995/permetrics
 
         Returns
@@ -340,7 +340,7 @@ class InaRbfClassifier(BaseInaRbf, ClassifierMixin):
         results : dict
             The results of the list metrics
         """
-        return self._BaseRbf__scores_cls(X, y, list_methods)
+        return self._BaseRbf__scores_cls(X, y, list_metrics)
 
     def evaluate(self, y_true, y_pred, list_metrics=("AS", "RS")):
         """
