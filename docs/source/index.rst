@@ -60,7 +60,7 @@ comparable alternative to the traditional RBF network and is compatible with the
 perform searches and hyperparameter tuning using the functionalities provided by the Scikit-Learn library.
 
 * **Free software:** GNU General Public License (GPL) V3 license
-* **Provided Estimator**: RbfRegressor, RbfClassifier, InaRbfRegressor, InaRbfClassifier, InaRbfTuner
+* **Provided Estimator**: RbfRegressor, RbfClassifier, NiaRbfRegressor, NiaRbfClassifier, InaRbfTuner
 * **Total InaRBf models**: > 400 Models
 * **Supported performance metrics**: >= 67 (47 regressions and 20 classifications)
 * **Supported loss functions**: >= 61 (45 regressions and 16 classifications)
