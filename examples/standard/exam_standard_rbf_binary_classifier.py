@@ -27,17 +27,17 @@ data.y_test = scaler_y.transform(data.y_test)
 print(type(data.X_train), type(data.y_train))
 
 ## Create model
-model = RbfClassifier(size_hidden=10, center_finder="kmean", sigmas=2.0, regularization=False, lamda=0.01, seed=None)
+model = RbfClassifier(size_hidden=10, center_finder="kmeans", sigmas=2.0, reg_lambda=0.1, seed=None)
 
 ## Train the model
 model.fit(X=data.X_train, y=data.y_train)
 
 ## Test the model
-y_pred = model.predict(data.X_test, return_prob=True)
+y_pred = model.predict_proba(data.X_test)
 print(y_pred)
-print(model.predict(data.X_test, return_prob=False))
+print(model.predict(data.X_test))
 
 ## Calculate some metrics
-print(model.score(X=data.X_test, y=data.y_test, method="AS"))
+print(model.score(X=data.X_test, y=data.y_test))
 print(model.scores(X=data.X_test, y=data.y_test, list_metrics=["PS", "RS", "NPV", "F1S", "F2S"]))
 print(model.evaluate(y_true=data.y_test, y_pred=y_pred, list_metrics=["F2S", "CKS", "FBS"]))

@@ -27,7 +27,7 @@ data.y_test = scaler_y.transform(data.y_test)
 print(type(data.X_train), type(data.y_train))
 
 ## Create model
-model = RbfRegressor(size_hidden=10, center_finder="kmean", sigmas=2.0, regularization=False, lamda=0.01, seed=42)
+model = RbfRegressor(size_hidden=10, center_finder="kmeans", sigmas=2.0, reg_lambda=0.1, seed=42)
 
 ## Train the model
 model.fit(data.X_train, data.y_train)
@@ -37,6 +37,6 @@ y_pred = model.predict(data.X_test)
 print(y_pred)
 
 ## Calculate some metrics
-print(model.score(X=data.X_test, y=data.y_test, method="RMSE"))
+print(model.score(X=data.X_test, y=data.y_test))
 print(model.scores(X=data.X_test, y=data.y_test, list_metrics=["R2", "NSE", "MAPE"]))
 print(model.evaluate(y_true=data.y_test, y_pred=y_pred, list_metrics=["R2", "NSE", "MAPE", "NNSE"]))
