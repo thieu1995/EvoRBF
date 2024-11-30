@@ -23,21 +23,55 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 
-**EvoRBF** is a Python library that implements a framework 
-for training Radial Basis Function (RBF) networks using `Nature-inspired Algorithms (NIAs)`. It provides a 
-comparable alternative to the traditional RBF network and is compatible with the Scikit-Learn library. With EvoRBF, you can 
-perform searches and hyperparameter tuning using the functionalities provided by the Scikit-Learn library.
+**EvoRBF** is mind-blowing framework for Radial Basis Function (RBF) networks.
+We explain several keys components and provide several types of RBF networks that you will never see in other places.
+
 
 | **EvoRBF**                   | **Evolving Radial Basis Function Network**                                  |
 |------------------------------|-----------------------------------------------------------------------------|
 | **Free software**            | GNU General Public License (GPL) V3 license                                 |
-| **Provided Estimator**       | RbfRegressor, RbfClassifier, InaRbfRegressor, InaRbfClassifier, InaRbfTuner |
+| **Provided Estimator**       | RbfRegressor, RbfClassifier, NiaRbfRegressor, NiaRbfClassifier, InaRbfTuner |
 | **Provided ML models**       | \> 400 Models                                                               |
 | **Supported metrics**        | \>= 67 (47 regressions and 20 classifications)                              |
 | **Supported loss functions** | \>= 61 (45 regressions and 16 classifications)                              |
 | **Documentation**            | https://evorbf.readthedocs.io                                               | 
 | **Python versions**          | \>= 3.8.x                                                                   |  
 | **Dependencies**             | numpy, scipy, scikit-learn, pandas, mealpy, permetrics                      |
+
+
+# Theory
+You can read several papers by using Google scholar search. Here we will walk through some basic concepts and parameters that matter to this network.
+
+## Structure
+
+1. RBF has input, single-hidden, and output layer.
+2. RBF is considered has only hidden-output weights. The output layer is linear combination.
+3. The output of hidden layer is calculate by radial function (e.g, Gaussian function, Thin spline,...)
+
+
+## Training algorithm
+1. RBF needs to train the centers, and widths of Gaussian activation function. (This is 1st phase)
+2. RBF usually use KMeans to find centers ==> Increase the complexity and time.
+   + In that case, user need to define widths ==> Can use 1 single width or each hidden with different width.
+   + Or RBF use random to find centers ==> Not good to split samples to different clusters.
+3. RBF needs to train the output weights. (This is 2nd phase)
+4. RBF do not use Gradient descent to calculate output weights, it used Moore–Penrose inverse (matrix multiplication, least square method) ==> so it is faster than MLP network.
+5. Moore-Penrose inverse can find the exact solution ==> why you want to use Gradient or Metaheuristics here ==> Hell no.
+6. In case of overfitting, what can we do with this network ==> We add Regularization method.
+7. If you have large-scale dataset ==> Set more hidden nodes ==> Then increase the Regularization parameter.
+
+
+So, we can see that what we need to do.
+1. Use Moore-Penrose inverse to find the output weights (May be we let user use Regularization method, the parameter will be automatic tuned)
+2. We need remove KMeans method, but we don't want to use Random method ==> We use metaheuristics here?
+    + May be not a good idea, since metaheuristics can be more complex than KMeans.
+    + But if we use metaheuristics to find everything (centers, width, )
+
+## Implementation version
+
+1. Rbf
+
+
 
 
 # Citation Request 
@@ -89,7 +123,7 @@ kernel) and `weights` (of hidden-output layer) in RBF network (WOA-RBF model) fo
 
 ```python
 import numpy as np
-from evorbf import Data, InaRbfRegressor
+from evorbf import Data, NiaRbfRegressor
 from sklearn.datasets import load_diabetes
 
 ## Load data object
@@ -110,7 +144,7 @@ data.y_test = scaler_y.transform(np.reshape(data.y_test, (-1, 1)))
 
 ## Create model
 opt_paras = {"name": "WOA", "epoch": 500, "pop_size": 20}
-model = InaRbfRegressor(size_hidden=25, center_finder="kmean", regularization=False, lamda=0.5, obj_name="MSE",
+model = NiaRbfRegressor(size_hidden=25, center_finder="kmean", regularization=False, lamda=0.5, obj_name="MSE",
                         optimizer="BaseGA", optimizer_paras=opt_paras, verbose=True, seed=42)
 
 ## Train the model
@@ -122,7 +156,7 @@ y_pred = model.predict(data.X_test)
 print(model.optimizer.g_best.solution)
 ## Calculate some metrics
 print(model.score(X=data.X_test, y=data.y_test, method="RMSE"))
-print(model.scores(X=data.X_test, y=data.y_test, list_methods=["R2", "R", "KGE", "MAPE"]))
+print(model.scores(X=data.X_test, y=data.y_test, list_metrics=["R2", "R", "KGE", "MAPE"]))
 print(model.evaluate(y_true=data.y_test, y_pred=y_pred, list_metrics=["MSE", "RMSE", "R2S", "NSE", "KGE", "MAPE"]))
 ```
 

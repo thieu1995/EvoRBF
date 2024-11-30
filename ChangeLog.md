@@ -1,9 +1,10 @@
 
-# Version 1.1.0
+# Version 2.0.0
 
 + Rename the title of framework
 + Rename the parameter for `score`, `scores` function.
-+ Rename proposed classes.
++ Fix bug OneHotEncoder class
++ Add `advanced_rbf` module with: `AdvancedRbfNet`, `BaseAdvancedRbf`, `AdvancedRbfRegressor`, and `AdvancedRbfClassifier` classes
 + Add ChangeLog.md
 
 ---------------------------------------------------------------------
@@ -20,7 +21,7 @@
 
 # Version 0.2.0 
 
-+ Add InaRbfClassifier class
++ Add NiaRbfClassifier class
 + Add traditional RBF model: RbfRegressor and RbfClassifier
 + Update examples, tests and docs
 + Add Github workflow
@@ -32,5 +33,5 @@
 
 + Add infors (CODE_OF_CONDUCT.md, MANIFEST.in, LICENSE, README.md, requirements.txt, CITATION.cff)
 + Add helpers modules (`metrics`, `scaler`, `validator`, and `preprocessor`)
-+ Add InaRbfRegressor class
++ Add NiaRbfRegressor class
 + Add examples and tests folders
