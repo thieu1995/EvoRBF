@@ -25,11 +25,10 @@ data.y_train, scaler_y = data.encode_label(data.y_train)
 data.y_test = scaler_y.transform(data.y_test)
 
 ## Create model
-opt_paras = {"name": "WOA", "epoch": 30, "pop_size": 30}
+opt_paras = {"name": "WOA", "epoch": 50, "pop_size": 20}
 print(NiaRbfClassifier.SUPPORTED_CLS_OBJECTIVES)
 model = NiaRbfClassifier(size_hidden=25, center_finder="kmeans", regularization=False, obj_name="NPV",
                         optim="OriginalWOA", optim_paras=opt_paras, verbose=True, seed=42)
-
 ## Train the model
 model.fit(X=data.X_train, y=data.y_train)
 
@@ -44,4 +43,3 @@ print(y_pred)
 print(model.score(X=data.X_test, y=data.y_test))
 print(model.scores(X=data.X_test, y=data.y_test, list_metrics=["PS", "RS", "NPV", "F1S", "F2S"]))
 print(model.evaluate(y_true=data.y_test, y_pred=y_pred, list_metrics=["F2S", "CKS", "FBS"]))
-
