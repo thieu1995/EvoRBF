@@ -38,5 +38,5 @@ print(y_pred)
 
 ## Calculate some metrics
 print(model.score(X=data.X_test, y=data.y_test, method="RMSE"))
-print(model.scores(X=data.X_test, y=data.y_test, list_methods=["R2", "NSE", "MAPE"]))
+print(model.scores(X=data.X_test, y=data.y_test, list_metrics=["R2", "NSE", "MAPE"]))
 print(model.evaluate(y_true=data.y_test, y_pred=y_pred, list_metrics=["R2", "NSE", "MAPE", "NNSE"]))

@@ -159,7 +159,7 @@ class RbfClassifier(BaseRbf, ClassifierMixin):
     reg_lambda : float, default=0.1
         The lamda value is used in regularization term. If set to 0, then no L2 is applied
 
-    seed : int, default=None
+    seed : int, None, default=None
         Determines random number generation for weights and bias initialization.
         Pass an int for reproducible results across multiple function calls.
 

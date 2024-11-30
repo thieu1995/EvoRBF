@@ -39,5 +39,5 @@ print(model.predict(data.X_test, return_prob=False))
 
 ## Calculate some metrics
 print(model.score(X=data.X_test, y=data.y_test, method="AS"))
-print(model.scores(X=data.X_test, y=data.y_test, list_methods=["PS", "RS", "NPV", "F1S", "F2S"]))
+print(model.scores(X=data.X_test, y=data.y_test, list_metrics=["PS", "RS", "NPV", "F1S", "F2S"]))
 print(model.evaluate(y_true=data.y_test, y_pred=y_pred, list_metrics=["F2S", "CKS", "FBS"]))
