@@ -10,5 +10,5 @@ from evorbf.helpers.scaler import DataTransformer
 from evorbf.helpers.preprocessor import Data
 from evorbf.core.nia_rbf import NiaRbfRegressor, NiaRbfClassifier
 from evorbf.core.standard_rbf import RbfRegressor, RbfClassifier
-from evorbf.core.rbf_tuner import InaRbfTuner
+from evorbf.core.rbf_tuner import NiaRbfTuner
 from evorbf.core.advanced_rbf import AdvancedRbfNet, AdvancedRbfRegressor, AdvancedRbfClassifier
