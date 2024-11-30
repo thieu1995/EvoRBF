@@ -365,6 +365,11 @@ class BaseNiaRbf(BaseRbf):
 
     seed : int, default=None
         The seed value is used for reproducibility.
+
+    Notes
+    -----
+    - This class is designed to be easily extended for hybrid metaheuristic-based RBF models.
+    - Metrics can be customized using the Permetrics library: https://github.com/thieu1995/permetrics
     """
 
     SUPPORTED_OPTIMIZERS = list(get_all_optimizers().keys())
