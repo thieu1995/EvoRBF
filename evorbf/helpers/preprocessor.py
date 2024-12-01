@@ -4,9 +4,7 @@
 #       Github: https://github.com/thieu1995        %                         
 # --------------------------------------------------%
 
-import pandas as pd
 import numpy as np
-from pathlib import Path
 from evorbf.helpers.scaler import DataTransformer
 from sklearn.model_selection import train_test_split
 
@@ -31,8 +29,8 @@ class LabelEncoder:
         """
         Fit label encoder to a given set of labels.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         y : array-like
             Labels to encode.
         """
@@ -44,13 +42,13 @@ class LabelEncoder:
         """
         Transform labels to encoded integer labels.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         y : array-like (1-D vector)
             Labels to encode.
 
-        Returns:
-        --------
+        Returns
+        -------
         encoded_labels : array-like
             Encoded integer labels.
         """
@@ -79,13 +77,13 @@ class LabelEncoder:
         """
         Transform integer labels to original labels.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         y : array-like
             Encoded integer labels.
 
-        Returns:
-        --------
+        Returns
+        -------
         original_labels : array-like
             Original labels.
         """

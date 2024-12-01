@@ -329,8 +329,8 @@ class BaseNiaRbf(BaseRbf):
     """
     Defines the most general class for Nature-inspired Algorithm-based RBF models that inherits the BaseRbf class
 
-    Note:
-    -----
+    Note
+    ----
         + In this model, the sigmas will be learned during the training process.
         + So the `sigmas` parameter is removed in the init function.
         + Besides, the `sigmas` is a list of value, each value represent a `sigma` for Gaussian function used in hidden node.

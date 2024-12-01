@@ -22,10 +22,9 @@ class NiaRbfRegressor(BaseNiaRbf, RegressorMixin):
         + use non-linear Gaussian function with `sigmas` as standard deviation
         + set up regulation term with hyperparameter `regularization`
 
-    Inherits
-    --------
-    BaseNiaRbf : The base class for NIA-based RBF networks.
-    RegressorMixin : Scikit-learn mixin class for regression estimators.
+    Inherits:
+        + BaseNiaRbf : The base class for NIA-based RBF networks.
+        + RegressorMixin : Scikit-learn mixin class for regression estimators.
 
     Parameters
     ----------
@@ -88,8 +87,8 @@ class NiaRbfRegressor(BaseNiaRbf, RegressorMixin):
     >>> data = Data(X, y)
     >>> data.split_train_test(test_size=0.2, random_state=1)
     >>> opt_paras = {"name": "GA", "epoch": 10, "pop_size": 30}
-    >>> model = NiaRbfRegressor(size_hidden=10, center_finder="kmeans", regularization=False, lamda=0.01,
-    >>>         obj_name=None, optimizer="BaseGA", optimizer_paras=opt_paras, verbose=True, seed=42, obj_weights=None)
+    >>> model = NiaRbfRegressor(size_hidden=10, center_finder="kmeans", regularization=False,
+    >>>         obj_name=None, optim="BaseGA", optim_paras=opt_paras, verbose=True, seed=42, obj_weights=None)
     >>> model.fit(data.X_train, data.y_train)
     >>> pred = model.predict(data.X_test)
     >>> print(pred)
