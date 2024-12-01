@@ -15,7 +15,7 @@ def readme():
 
 setup(
     name="evorbf",
-    version="1.0.0",
+    version="2.0.0",
     author="Thieu",
     author_email="nguyenthieu2102@gmail.com",
     description="EvoRBF: A Nature-inspired Algorithmic Framework for Evolving Radial Basis Function Networks",

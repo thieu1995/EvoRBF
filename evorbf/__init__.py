@@ -4,8 +4,9 @@
 #       Github: https://github.com/thieu1995        %                         
 # --------------------------------------------------%
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 
+from mealpy import IntegerVar, StringVar, FloatVar
 from evorbf.helpers.scaler import DataTransformer
 from evorbf.helpers.preprocessor import Data
 from evorbf.core.nia_rbf import NiaRbfRegressor, NiaRbfClassifier
