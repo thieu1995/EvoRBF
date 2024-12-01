@@ -4,8 +4,13 @@
 + Rename the title of framework
 + Rename the parameter for `score`, `scores` function.
 + Fix bug OneHotEncoder class
++ Update `standard_rbf` module with: `RbfRegressor` and `RbfClassifier` classes.
 + Add `advanced_rbf` module with: `AdvancedRbfNet`, `BaseAdvancedRbf`, `AdvancedRbfRegressor`, and `AdvancedRbfClassifier` classes
-+ Add ChangeLog.md
++ Update `nia_rbf` module with: `NiaRbfRegressor` and `NiaRbfClassifier` for regression and classification problems.
++ Update `rbf_tuner` module with: `NiaRbfTuner` class.
++ Add `center_finder` and `kernel` modules for `advanced_rbf` module.
++ Update documentation, examples, test cases.
++ Update citation, changelog, readme.
 
 ---------------------------------------------------------------------
 
