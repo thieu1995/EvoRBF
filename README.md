@@ -22,11 +22,6 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11136007.svg)](https://doi.org/10.5281/zenodo.11136007)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-
-**EvoRBF** is mind-blowing framework for Radial Basis Function (RBF) networks.
-We explain several keys components and provide several types of RBF networks that you will never see in other places.
-
-
 | **EvoRBF**                           | **Evolving Radial Basis Function Network**             |
 |--------------------------------------|--------------------------------------------------------|
 | **Free software**                    | GNU General Public License (GPL) V3 license            |
@@ -68,7 +63,10 @@ We explain several keys components and provide several types of RBF networks tha
 
 # Theory
 
-You can read several papers by using Google scholar search. There are many ways we can use Nature-inspired Algorithms 
+**EvoRBF** is mind-blowing framework for Radial Basis Function (RBF) networks.
+We explain several keys components and provide several types of RBF networks that you will never see in other places.
+
+You can read several papers by using Google Scholar search. There are many ways we can use Nature-inspired Algorithms 
 to optimize Radial Basis Function network, for example, you can read [this paper](https://doi.org/10.1016/B978-0-443-18764-3.00015-1).
 Here we will walk through some basic concepts and parameters that matter to this network.
 
@@ -218,9 +216,9 @@ model = NiaRbfTuner(problem_type="classification", bounds=my_bounds, cv=3, scori
    + Or RBF use random to find centers ==> Not good to split samples to different clusters.
 3. RBF needs to train the output weights. (This is 2nd phase)
 4. RBF do not use Gradient descent to calculate output weights, it used Moore–Penrose inverse (matrix multiplication, least square method) ==> so it is faster than MLP network.
-5. Moore-Penrose inverse can find the exact solution ==> why you want to use Gradient or Metaheuristics here ==> Hell no.
-6. In case of overfitting, what can we do with this network ==> We add Regularization method.
-7. If you have large-scale dataset ==> Set more hidden nodes ==> Then increase the Regularization parameter.
+5. Moore-Penrose inverse can find the exact solution ==> So we don't have to use Gradient Descent or Approximation algorithm here.
+6. In case of overfitting, what can we do with this network ==> We add L2 regularization method.
+7. If you have large-scale dataset ==> Set more hidden nodes ==> Then increase the L2 regularization parameter.
 
 ```code
 1. RbfRegressor, RbfClassifier: You need to set up 4 types of hyper-parameters.
