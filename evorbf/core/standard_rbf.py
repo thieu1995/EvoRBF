@@ -201,7 +201,7 @@ class RbfClassifier(BaseRbf, ClassifierMixin):
 
     def __init__(self, size_hidden=10, center_finder="kmeans", sigmas=2.0, reg_lambda=0.1, seed=None):
         super().__init__(size_hidden, center_finder, sigmas, reg_lambda, seed)
-        self.n_labels = None
+        self.n_labels, self.classes_ = None, None
 
     def create_network(self, X, y):
         """
@@ -229,7 +229,7 @@ class RbfClassifier(BaseRbf, ClassifierMixin):
         if isinstance(y, (list, tuple, np.ndarray)):
             y = np.squeeze(np.asarray(y))
             if y.ndim == 1:
-                self.n_labels = len(np.unique(y))
+                self.n_labels, self.classes_ = len(np.unique(y)), np.unique(y)
             else:
                 raise TypeError("Invalid y array shape, it should be 1D vector containing labels 0, 1, 2,.. and so on.")
         else:
