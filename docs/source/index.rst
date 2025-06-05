@@ -6,7 +6,7 @@
 Welcome to EvoRBF's documentation!
 ==================================
 
-.. image:: https://img.shields.io/badge/release-2.0.0-yellow.svg
+.. image:: https://img.shields.io/badge/release-2.1.0-yellow.svg
    :target: https://github.com/thieu1995/evorbf/releases
 
 .. image:: https://img.shields.io/pypi/wheel/gensim.svg

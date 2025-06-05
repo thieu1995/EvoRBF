@@ -4,7 +4,7 @@ Installation
 
 * Install the `current PyPI release <https://pypi.python.org/pypi/evorbf />`_::
 
-   $ pip install evorbf==2.0.0
+   $ pip install evorbf==2.1.0
 
 
 * Install directly from source code::
