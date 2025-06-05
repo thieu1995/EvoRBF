@@ -4,7 +4,9 @@
 #       Github: https://github.com/thieu1995        %                         
 # --------------------------------------------------%
 
+import inspect
 import pickle
+import pprint
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -186,6 +188,19 @@ class NiaRbfTuner:
         self.best_estimator = None
         self.best_score = None
         self.loss_train = None
+
+    def __repr__(self, **kwargs):
+        """Pretty-print parameters like scikit-learn's Estimator.
+        """
+        param_order = list(inspect.signature(self.__init__).parameters.keys())
+        param_dict = {k: getattr(self, k) for k in param_order}
+
+        param_str = ", ".join(f"{k}={repr(v)}" for k, v in param_dict.items())
+        if len(param_str) <= 80:
+            return f"{self.__class__.__name__}({param_str})"
+        else:
+            formatted_params = ",\n  ".join(f"{k}={pprint.pformat(v)}" for k, v in param_dict.items())
+            return f"{self.__class__.__name__}(\n  {formatted_params}\n)"
 
     def _set_optim(self, optim=None, optim_params=None):
         """

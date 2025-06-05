@@ -3,8 +3,11 @@
 #       Email: nguyenthieu2102@gmail.com            %                                                    
 #       Github: https://github.com/thieu1995        %                         
 # --------------------------------------------------%
+
+import inspect
 import numbers
 import pickle
+import pprint
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -219,6 +222,19 @@ class BaseRbf(BaseEstimator):
             return validator.check_str("method", method, list_supported_methods)
         else:
             raise ValueError(f"method should be a string and belongs to {list_supported_methods}")
+
+    def __repr__(self, **kwargs):
+        """Pretty-print parameters like scikit-learn's Estimator.
+        """
+        param_order = list(inspect.signature(self.__init__).parameters.keys())
+        param_dict = {k: getattr(self, k) for k in param_order}
+
+        param_str = ", ".join(f"{k}={repr(v)}" for k, v in param_dict.items())
+        if len(param_str) <= 80:
+            return f"{self.__class__.__name__}({param_str})"
+        else:
+            formatted_params = ",\n  ".join(f"{k}={pprint.pformat(v)}" for k, v in param_dict.items())
+            return f"{self.__class__.__name__}(\n  {formatted_params}\n)"
 
     def create_network(self, X, y):
         return None, None
