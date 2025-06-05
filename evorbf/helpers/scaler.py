@@ -12,37 +12,86 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, Ro
 
 
 class OneHotEncoder:
+    """
+    A simple implementation of one-hot encoding for 1D categorical data.
+
+    Attributes:
+        categories_ (np.ndarray): Sorted array of unique categories fitted from the input data.
+    """
     def __init__(self):
+        """Initialize the encoder with no categories."""
         self.categories_ = None
 
     def fit(self, X):
-        """Fit the encoder to unique categories in X."""
+        """
+        Fit the encoder to the unique categories in X.
+
+        Args:
+            X (array-like): 1D array of categorical values.
+
+        Returns:
+            self: Fitted OneHotEncoder instance.
+        """
+        X = np.asarray(X).ravel()
         self.categories_ = np.unique(X)
         return self
 
     def transform(self, X):
-        """Transform X into one-hot encoded format."""
+        """
+        Transform input data into one-hot encoded format.
+
+        Args:
+            X (array-like): 1D array of categorical values.
+
+        Returns:
+            np.ndarray: One-hot encoded array of shape (n_samples, n_categories).
+
+        Raises:
+            ValueError: If the encoder has not been fitted or unknown category is found.
+        """
         if self.categories_ is None:
             raise ValueError("The encoder has not been fitted yet.")
+
+        X = np.asarray(X).ravel()
         one_hot = np.zeros((X.shape[0], len(self.categories_)), dtype=int)
+
         for i, val in enumerate(X):
-            index = np.where(self.categories_ == val)[0][0]
-            one_hot[i, index] = 1
+            indices = np.where(self.categories_ == val)[0]
+            if len(indices) == 0:
+                raise ValueError(f"Unknown category encountered during transform: {val}")
+            one_hot[i, indices[0]] = 1
         return one_hot
 
     def fit_transform(self, X):
-        """Fit the encoder to X and transform X."""
-        self.fit(X)
-        return self.transform(X)
+        """
+        Fit the encoder to X and transform X.
+
+        Args:
+            X (array-like): 1D array of categorical values.
+
+        Returns:
+            np.ndarray: One-hot encoded array of shape (n_samples, n_categories).
+        """
+        return self.fit(X).transform(X)
 
     def inverse_transform(self, one_hot):
-        """Convert one-hot encoded format back to original categories."""
+        """
+        Convert one-hot encoded data back to original categories.
+
+        Args:
+            one_hot (np.ndarray): 2D array of one-hot encoded data.
+
+        Returns:
+            np.ndarray: 1D array of original categorical values.
+
+        Raises:
+            ValueError: If the encoder has not been fitted or shape mismatch occurs.
+        """
         if self.categories_ is None:
             raise ValueError("The encoder has not been fitted yet.")
         if one_hot.shape[1] != len(self.categories_):
             raise ValueError("The shape of the input does not match the number of categories.")
-        original = np.array([self.categories_[np.argmax(row)] for row in one_hot])
-        return original
+        return np.array([self.categories_[np.argmax(row)] for row in one_hot])
 
 
 class ObjectiveScaler:
@@ -185,6 +234,18 @@ class SinhArcSinhScaler(BaseEstimator, TransformerMixin):
 
 
 class DataTransformer(BaseEstimator, TransformerMixin):
+    """
+    The class is used to transform data using different scaling techniques.
+
+    Parameters
+    ----------
+    scaling_methods : str, tuple, list, or np.ndarray
+        The name of the scaler you want to use. Supported scaler names are: 'standard', 'minmax', 'max-abs',
+        'log1p', 'loge', 'sqrt', 'sinh-arc-sinh', 'robust', 'box-cox', 'yeo-johnson'.
+
+    list_dict_paras : dict or list of dict
+        The parameters for the scaler. If you have only one scaler, please use a dict. Otherwise, please use a list of dict.
+    """
 
     SUPPORTED_SCALERS = {"standard": StandardScaler, "minmax": MinMaxScaler, "max-abs": MaxAbsScaler,
                          "log1p": Log1pScaler, "loge": LogeScaler, "sqrt": SqrtScaler,
@@ -192,46 +253,115 @@ class DataTransformer(BaseEstimator, TransformerMixin):
                          "box-cox": BoxCoxScaler, "yeo-johnson": YeoJohnsonScaler}
 
     def __init__(self, scaling_methods=('standard', ), list_dict_paras=None):
-        if type(scaling_methods) is str:
+        """
+        Initialize the DataTransformer.
+
+        Parameters
+        ----------
+        scaling_methods : str or list/tuple of str
+            One or more scaling methods to apply in sequence.
+            Must be keys in SUPPORTED_SCALERS.
+
+        list_dict_paras : dict or list of dict, optional
+            Parameters for each scaler. If only one method is provided,
+            a single dict is expected. If multiple methods are provided,
+            a list of parameter dictionaries should be given.
+        """
+        if isinstance(scaling_methods, str):
             if list_dict_paras is None:
                 self.list_dict_paras = [{}]
-            elif type(list_dict_paras) is dict:
+            elif isinstance(list_dict_paras, dict):
                 self.list_dict_paras = [list_dict_paras]
             else:
-                raise TypeError(f"You use only 1 scaling method, the list_dict_paras should be dict of parameter for that scaler.")
+                raise TypeError("Expected a single dict for list_dict_paras when using one scaling method.")
             self.scaling_methods = [scaling_methods]
-        elif type(scaling_methods) in (tuple, list, np.ndarray):
+        elif isinstance(scaling_methods, (list, tuple, np.ndarray)):
             if list_dict_paras is None:
-                self.list_dict_paras = [{}, ]*len(scaling_methods)
-            elif type(list_dict_paras) in (tuple, list, np.ndarray):
+                self.list_dict_paras = [{} for _ in range(len(scaling_methods))]
+            elif isinstance(list_dict_paras, (list, tuple, np.ndarray)):
                 self.list_dict_paras = list(list_dict_paras)
             else:
-                raise TypeError(f"Invalid type of list_dict_paras. Supported type are: tuple, list, or np.ndarray of parameter dict")
+                raise TypeError("list_dict_paras should be a list/tuple of dicts when using multiple scaling methods.")
             self.scaling_methods = list(scaling_methods)
         else:
-            raise TypeError(f"Invalid type of scaling_methods. Supported type are: str, tuple, list, or np.ndarray")
+            raise TypeError("scaling_methods must be a str, list, tuple, or np.ndarray")
 
-        self.scalers = [self._get_scaler(technique, paras) for (technique, paras) in zip(self.scaling_methods, self.list_dict_paras)]
+        self.scalers = [self._get_scaler(technique, paras) for (technique, paras) in
+                        zip(self.scaling_methods, self.list_dict_paras)]
+
+    @staticmethod
+    def _ensure_2d(X):
+        X = np.asarray(X)
+        if X.ndim == 1:
+            X = X.reshape(-1, 1)  # convert (n,) to (n, 1)
+        elif X.ndim != 2:
+            raise ValueError(f"Input X must be 1D or 2D, but got shape {X.shape}")
+        return X
 
     def _get_scaler(self, technique, paras):
         if technique in self.SUPPORTED_SCALERS.keys():
-            if type(paras) is not dict:
+            if not isinstance(paras, dict):
                 paras = {}
             return self.SUPPORTED_SCALERS[technique](**paras)
         else:
-            raise ValueError(f"Invalid scaling technique. Supported techniques are {self.SUPPORTED_SCALERS.keys()}")
+            raise ValueError(f"Unsupported scaling technique: '{technique}'. Supported techniques: {list(self.SUPPORTED_SCALERS)}")
 
     def fit(self, X, y=None):
+        """
+        Fit the sequence of scalers on the data.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The input data.
+
+        y : Ignored
+            Not used, exists for compatibility with sklearn's pipeline.
+
+        Returns
+        -------
+        self : object
+            Fitted transformer.
+        """
+        X = self._ensure_2d(X)
         for idx, _ in enumerate(self.scalers):
             X = self.scalers[idx].fit_transform(X)
         return self
 
     def transform(self, X):
+        """
+        Transform the input data using the sequence of fitted scalers.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Input data to transform.
+
+        Returns
+        -------
+        X_transformed : array-like
+            Transformed data.
+        """
+        X = self._ensure_2d(X)
         for scaler in self.scalers:
             X = scaler.transform(X)
         return X
 
     def inverse_transform(self, X):
+        """
+        Reverse the transformations applied to the data.
+
+        Parameters
+        ----------
+        X : array-like
+            Transformed data to invert.
+
+        Returns
+        -------
+        X_original : array-like
+            Original data before transformation.
+        """
+        X = self._ensure_2d(X)
         for scaler in reversed(self.scalers):
             X = scaler.inverse_transform(X)
         return X
