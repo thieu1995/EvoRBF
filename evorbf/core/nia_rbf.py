@@ -49,6 +49,16 @@ class NiaRbfRegressor(BaseNiaRbf, RegressorMixin):
         Whether to print progress messages to stdout.
     seed : int, default=None
         The seed value is used for reproducibility.
+    lb : int, float, tuple, list, np.ndarray, optional
+        Lower bounds for sigmas in network.
+    ub : int, float, tuple, list, np.ndarray, optional
+        Upper bounds for sigmas in network.
+    mode : str, optional
+        Mode for optimizer (default is 'single').
+    n_workers : int, optional
+        Number of workers for parallel processing in optimizer (default is None).
+    termination : any, optional
+        Termination criteria for optimizer (default is None).
 
     Attributes
     ----------
@@ -88,7 +98,7 @@ class NiaRbfRegressor(BaseNiaRbf, RegressorMixin):
     >>> data.split_train_test(test_size=0.2, random_state=1)
     >>> opt_paras = {"name": "GA", "epoch": 10, "pop_size": 30}
     >>> model = NiaRbfRegressor(size_hidden=10, center_finder="kmeans", regularization=False,
-    >>>         obj_name=None, optim="BaseGA", optim_params=opt_paras, verbose=True, seed=42, obj_weights=None)
+    >>>         obj_name=None, optim="BaseGA", optim_params=opt_paras, verbose=True, seed=42)
     >>> model.fit(data.X_train, data.y_train)
     >>> pred = model.predict(data.X_test)
     >>> print(pred)
@@ -102,10 +112,11 @@ class NiaRbfRegressor(BaseNiaRbf, RegressorMixin):
     """
 
     def __init__(self, size_hidden=10, center_finder="kmeans", regularization=False,
-                 obj_name=None, optim="BaseGA", optim_params=None, verbose=True, seed=None, obj_weights=None):
+                 obj_name=None, optim="BaseGA", optim_params=None, verbose=True, seed=None,
+                 lb=None, ub=None, mode='single', n_workers=None, termination=None):
         super().__init__(size_hidden=size_hidden, center_finder=center_finder, regularization=regularization,
-                         obj_name=obj_name, optim=optim, optim_params=optim_params, verbose=verbose, seed=seed)
-        self.obj_weights = obj_weights
+                         obj_name=obj_name, optim=optim, optim_params=optim_params, verbose=verbose, seed=seed,
+                         lb=lb, ub=ub, mode=mode, n_workers=n_workers, termination=termination)
 
     def create_network(self, X, y):
         if type(y) in (list, tuple, np.ndarray):
@@ -118,14 +129,6 @@ class NiaRbfRegressor(BaseNiaRbf, RegressorMixin):
                 raise TypeError("Invalid y array shape, it should be 1D vector or 2D matrix.")
         else:
             raise TypeError("Invalid y array type, it should be list, tuple or np.ndarray")
-        if size_output > 1:
-            if self.obj_weights is None:
-                self.obj_weights = 1./size_output * np.ones(size_output)
-            elif self.obj_weights in (list, tuple, np.ndarray):
-                if not (len(self.obj_weights) == size_output):
-                    raise ValueError(f"There is {size_output} objectives, but obj_weights has size of {len(self.obj_weights)}")
-            else:
-                raise TypeError("Invalid obj_weights array type, it should be list, tuple or np.ndarray")
         obj_scaler = ObjectiveScaler(obj_name="self", ohe_scaler=None)
         if self.regularization:
             network = self._net_class(size_hidden=self.size_hidden, center_finder=self.center_finder, seed=self.seed)
@@ -247,6 +250,16 @@ class NiaRbfClassifier(BaseNiaRbf, ClassifierMixin):
         Whether to print progress messages to stdout.
     seed : int, default=None
         The seed value is used for reproducibility.
+    lb : int, float, tuple, list, np.ndarray, optional
+        Lower bounds for sigmas in network.
+    ub : int, float, tuple, list, np.ndarray, optional
+        Upper bounds for sigmas in network.
+    mode : str, optional
+        Mode for optimizer (default is 'single').
+    n_workers : int, optional
+        Number of workers for parallel processing in optimizer (default is None).
+    termination : any, optional
+        Termination criteria for optimizer (default is None).
 
     Examples
     --------
@@ -268,23 +281,24 @@ class NiaRbfClassifier(BaseNiaRbf, ClassifierMixin):
     CLS_OBJ_LOSSES = ["CEL", "HL", "KLDL", "BSL"]
 
     def __init__(self, size_hidden=10, center_finder="kmeans", regularization=False,
-                 obj_name=None, optim="BaseGA", optim_params=None, verbose=True, seed=None, obj_weights=None):
+                 obj_name=None, optim="BaseGA", optim_params=None, verbose=True, seed=None,
+                 lb=None, ub=None, mode='single', n_workers=None, termination=None):
         super().__init__(size_hidden=size_hidden, center_finder=center_finder, regularization=regularization,
-                         obj_name=obj_name, optim=optim, optim_params=optim_params, verbose=verbose, seed=seed)
+                         obj_name=obj_name, optim=optim, optim_params=optim_params, verbose=verbose, seed=seed,
+                         lb=lb, ub=ub, mode=mode, n_workers=n_workers, termination=termination)
         self.return_prob = False
-        self.n_labels = None
-        self.obj_weights = obj_weights
+        self.n_labels, self.classes_ = None, None
 
     def _check_y(self, y):
         if type(y) in (list, tuple, np.ndarray):
             y = np.squeeze(np.asarray(y))
             if y.ndim == 1:
-                return len(np.unique(y))
+                return len(np.unique(y)), np.unique(y)
             raise TypeError("Invalid y array shape, it should be 1D vector containing labels 0, 1, 2,.. and so on.")
         raise TypeError("Invalid y array type, it should be list, tuple or np.ndarray")
 
     def create_network(self, X, y) -> Tuple[CustomRBF, ObjectiveScaler]:
-        self.n_labels = self._check_y(y)
+        self.n_labels, self.classes_ = self._check_y(y)
         if self.n_labels > 2:
             if self.obj_name in self.CLS_OBJ_LOSSES:
                 self.return_prob = True
