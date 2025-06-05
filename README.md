@@ -133,6 +133,8 @@ print(model.scores(X=data.X_test, y=data.y_test, list_metrics=["R2", "R", "KGE",
 print(model.evaluate(y_true=data.y_test, y_pred=y_pred, list_metrics=["MSE", "RMSE", "R2S", "NSE", "KGE", "MAPE"]))
 ```
 
+---
+
 ## 📚 Brief Theory Combine With Deep Usage
 
 **EvoRBF** is mind-blowing framework for Radial Basis Function (RBF) networks.
@@ -149,6 +151,8 @@ The RBF network consists of three layers:
 1. **Input layer**: Accepts input features.
 2. **Hidden layer**: Applies radial basis functions (e.g., Gaussian).
 3. **Output layer**: Computes linear combinations of hidden outputs.
+
+---
 
 ### 🛠️ Model Training
 
@@ -185,6 +189,7 @@ y_pred = model.predict(X_test)
 y_pred_prob = model.predict_proba(X_test)
 ```
 
+---
 
 #### Advanced RBF models
 
@@ -230,6 +235,8 @@ y_pred = model.predict(X_test)
 y_pred_prob = model.predict_proba(X_test)
 ```
 
+---
+
 #### Nature-inspired Algorithm-based RBF models
 
 This is the main purpose of this library. In this type of models,
@@ -260,6 +267,8 @@ y_pred = model.predict(X_test)
 y_pred_prob = model.predict_proba(X_test)
 ```
 
+---
+
 #### 🎯 Nature-inspired Algorithm-based hyperparameter RBF tuning model
 
 In this case, user can use NIA to tune hyper-parameters of traditional RBF models.
@@ -279,6 +288,8 @@ model = NiaRbfTuner(problem_type="classification", bounds=my_bounds, cv=3, scori
                     optim="OriginalWOA", optim_params={"epoch": 10, "pop_size": 20}, 
                     verbose=True, seed=42)
 ```
+
+---
 
 ### My notes
 
