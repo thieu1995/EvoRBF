@@ -69,7 +69,7 @@ class RbfRegressor(BaseRbf, RegressorMixin):
         super().__init__(size_hidden, center_finder, sigmas, reg_lambda, seed)
 
     def create_network(self, X, y):
-        if type(y) in (list, tuple, np.ndarray):
+        if isinstance(y, (list, tuple, np.ndarray)):
             y = np.squeeze(np.asarray(y))
             if y.ndim == 1:
                 self.size_output = 1
@@ -226,7 +226,7 @@ class RbfClassifier(BaseRbf, ClassifierMixin):
         TypeError
             If the target array `y` is not a 1D array or is of an unsupported type.
         """
-        if type(y) in (list, tuple, np.ndarray):
+        if isinstance(y, (list, tuple, np.ndarray)):
             y = np.squeeze(np.asarray(y))
             if y.ndim == 1:
                 self.n_labels = len(np.unique(y))
