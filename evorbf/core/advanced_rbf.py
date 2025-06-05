@@ -435,13 +435,13 @@ class AdvancedRbfClassifier(BaseAdvancedRbf, ClassifierMixin):
                  rbf_kernel="gaussian", kernel_params=None,
                  reg_lambda=0.1, has_bias=False, seed=42):
         super().__init__(center_finder, finder_params, rbf_kernel, kernel_params, reg_lambda, has_bias, seed)
-        self.n_labels = None
+        self.n_labels, self.classes_ = None, None
 
     def fit(self, X, y):
         if isinstance(y, (list, tuple, np.ndarray)):
             y = np.squeeze(np.asarray(y))
             if y.ndim == 1:
-                self.n_labels = len(np.unique(y))
+                self.n_labels, self.classes_ = len(np.unique(y)), np.unique(y)
             else:
                 raise TypeError("Invalid y array shape, it should be 1D vector containing labels 0, 1, 2,.. and so on.")
         else:
