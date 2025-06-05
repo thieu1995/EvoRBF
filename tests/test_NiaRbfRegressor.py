@@ -24,7 +24,7 @@ def test_initialization():
     assert model.size_hidden == 10
     assert model.center_finder == "kmeans"
     assert model.regularization is True
-    assert model.optimizer.name == "BaseGA"
+    assert model.optim == "BaseGA"
     assert model.optim_params == {"epoch": 10, "pop_size": 30}
     assert model.verbose is True
     assert model.seed == 42
