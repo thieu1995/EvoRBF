@@ -11,142 +11,231 @@ from sklearn.model_selection import train_test_split
 
 class LabelEncoder:
     """
-    Encode categorical features as integer labels.
+    Encode categorical labels as integer indices and decode them back.
+
+    This class maps unique categorical labels to integers from 0 to n_classes - 1.
     """
 
     def __init__(self):
+        """
+        Initialize the label encoder.
+        """
         self.unique_labels = None
         self.label_to_index = {}
 
-    @staticmethod
-    def check_y(y):
-        y = np.squeeze(np.asarray(y))
-        if y.ndim != 1:
-            raise ValueError("y label should have shape like 1-D vector.")
-        return y
-
     def fit(self, y):
         """
-        Fit label encoder to a given set of labels.
+        Fit the encoder by finding unique labels in the input data.
 
         Parameters
         ----------
         y : array-like
-            Labels to encode.
+            Input labels.
+
+        Returns
+        -------
+        self : LabelEncoder
+            Fitted LabelEncoder instance.
         """
-        y = self.check_y(y)
+        y = np.asarray(y).ravel()
         self.unique_labels = np.unique(y)
         self.label_to_index = {label: i for i, label in enumerate(self.unique_labels)}
+        return self
 
     def transform(self, y):
         """
-        Transform labels to encoded integer labels.
-
-        Parameters
-        ----------
-        y : array-like (1-D vector)
-            Labels to encode.
-
-        Returns
-        -------
-        encoded_labels : array-like
-            Encoded integer labels.
-        """
-        y = self.check_y(y)
-        if self.unique_labels is None:
-            raise ValueError("Label encoder has not been fit yet.")
-        return np.array([self.label_to_index[label] for label in y])
-
-    def fit_transform(self, y):
-        """Fit label encoder and return encoded labels.
-
-        Parameters
-        ----------
-        y : array-like of shape (n_samples,)
-            Target values.
-
-        Returns
-        -------
-        y : array-like of shape (n_samples,)
-            Encoded labels.
-        """
-        self.fit(y)
-        return self.transform(y)
-
-    def inverse_transform(self, y):
-        """
-        Transform integer labels to original labels.
+        Transform labels to integer indices.
 
         Parameters
         ----------
         y : array-like
+            Labels to encode.
+
+        Returns
+        -------
+        encoded_labels : np.ndarray
+            Encoded integer labels.
+
+        Raises
+        ------
+        ValueError
+            If the encoder has not been fitted or unknown labels are found.
+        """
+        if self.unique_labels is None:
+            raise ValueError("Label encoder has not been fit yet.")
+        y = np.asarray(y).ravel()
+        encoded = []
+        for label in y:
+            if label not in self.label_to_index:
+                raise ValueError(f"Unknown label: {label}")
+            encoded.append(self.label_to_index[label])
+        return np.array(encoded)
+
+    def fit_transform(self, y):
+        """
+        Fit the encoder and transform labels in one step.
+
+        Parameters
+        ----------
+        y : array-like of shape (n_samples,)
+            Input labels.
+
+        Returns
+        -------
+        np.ndarray
+            Encoded integer labels.
+        """
+        return self.fit(y).transform(y)
+
+    def inverse_transform(self, y):
+        """
+        Transform integer indices back to original labels.
+
+        Parameters
+        ----------
+        y : array-like of int
             Encoded integer labels.
 
         Returns
         -------
-        original_labels : array-like
+        original_labels : np.ndarray
             Original labels.
+
+        Raises
+        ------
+        ValueError
+            If the encoder has not been fitted or index is out of bounds.
         """
-        y = self.check_y(y)
         if self.unique_labels is None:
             raise ValueError("Label encoder has not been fit yet.")
-        return np.array([self.unique_labels[i] if i in self.label_to_index.values() else "unknown" for i in y])
+        y = np.asarray(y).ravel()
+        return np.array([self.unique_labels[i] if 0 <= i < len(self.unique_labels) else "unknown" for i in y])
 
 
 class TimeSeriesDifferencer:
+    """
+    A class for applying and reversing differencing on time series data.
+
+    Differencing helps remove trends and seasonality from time series for better modeling.
+    """
 
     def __init__(self, interval=1):
+        """
+        Initialize the differencer with a specified interval.
+
+        Parameters
+        ----------
+        interval : int
+            The lag interval to use for differencing. Must be >= 1.
+        """
         if interval < 1:
             raise ValueError("Interval for differencing must be at least 1.")
         self.interval = interval
+        self.original_data = None
 
     def difference(self, X):
+        """
+        Apply differencing to the input time series.
+
+        Parameters
+        ----------
+        X : array-like
+            The original time series data.
+
+        Returns
+        -------
+        np.ndarray
+            The differenced time series of length (len(X) - interval).
+        """
+        X = np.asarray(X)
+        if X.ndim != 1:
+            raise ValueError("Input must be a one-dimensional array.")
         self.original_data = X.copy()
         return np.array([X[i] - X[i - self.interval] for i in range(self.interval, len(X))])
 
     def inverse_difference(self, diff_data):
+        """
+        Reverse the differencing transformation using the stored original data.
+
+        Parameters
+        ----------
+        diff_data : array-like
+            The differenced data to invert.
+
+        Returns
+        -------
+        np.ndarray
+            The reconstructed original data (excluding the first `interval` values).
+
+        Raises
+        ------
+        ValueError
+            If the original data is not available.
+        """
         if self.original_data is None:
-            raise ValueError("Original data is required for inversion.")
-        return np.array([diff_data[i - self.interval] + self.original_data[i - self.interval] for i in range(self.interval, len(self.original_data))])
+            raise ValueError("Original data is required for inversion. Call difference() first.")
+        diff_data = np.asarray(diff_data)
+        return np.array([
+            diff_data[i - self.interval] + self.original_data[i - self.interval]
+            for i in range(self.interval, len(self.original_data))
+        ])
 
 
 class FeatureEngineering:
+    """
+    A class for performing custom feature engineering on numeric datasets.
+    """
+
     def __init__(self):
         """
-        Initialize the FeatureEngineering class
+        Initialize the FeatureEngineering class.
+
+        Currently, this class has no parameters but can be extended in the future.
         """
-        # Check if the threshold is a valid number
         pass
 
     def create_threshold_binary_features(self, X, threshold):
         """
-        Perform feature engineering to add binary indicator columns for values below the threshold.
-        Add each new column right after the corresponding original column.
+        Add binary indicator columns to mark values below a given threshold.
+        Each original column is followed by a new column indicating whether
+        each value is below the threshold (1 if True, 0 otherwise).
 
-        Args:
-        X (numpy.ndarray): The input 2D matrix of shape (n_samples, n_features).
-        threshold (float): The threshold value for identifying low values.
+        Parameters
+        ----------
+        X : numpy.ndarray
+            The input 2D matrix of shape (n_samples, n_features).
 
-        Returns:
-        numpy.ndarray: The updated 2D matrix with binary indicator columns.
+        threshold : float
+            The threshold value used to determine binary flags.
+
+        Returns
+        -------
+        numpy.ndarray
+            A new 2D matrix of shape (n_samples, 2 * n_features),
+            where each original column is followed by its binary indicator column.
+
+        Raises
+        ------
+        ValueError
+            If `X` is not a NumPy array or not 2D.
+            If `threshold` is not a numeric type.
         """
-        # Check if X is a NumPy array
         if not isinstance(X, np.ndarray):
             raise ValueError("Input X should be a NumPy array.")
-        # Check if the threshold is a valid number
-        if not (isinstance(threshold, int) or isinstance(threshold, float)):
+        if X.ndim != 2:
+            raise ValueError("Input X must be a 2D array.")
+        if not isinstance(threshold, (int, float)):
             raise ValueError("Threshold should be a numeric value.")
 
-        # Create a new matrix to hold the original and new columns
-        X_new = np.zeros((X.shape[0], X.shape[1] * 2))
-        # Iterate over each column in X
+        # Create a new matrix to hold original and new binary columns
+        X_new = np.zeros((X.shape[0], X.shape[1] * 2), dtype=X.dtype)
+
         for idx in range(X.shape[1]):
             feature_values = X[:, idx]
-            # Create a binary indicator column for values below the threshold
             indicator_column = (feature_values < threshold).astype(int)
-            # Add the original column and indicator column to the new matrix
             X_new[:, idx * 2] = feature_values
             X_new[:, idx * 2 + 1] = indicator_column
+
         return X_new
 
 
