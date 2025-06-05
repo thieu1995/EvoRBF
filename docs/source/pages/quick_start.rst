@@ -57,7 +57,7 @@ to provide users with convenience and faster usage
     ## Create model
     opt_paras = {"name": "WOA", "epoch": 500, "pop_size": 20}
     model = NiaRbfRegressor(size_hidden=25, center_finder="kmeans", regularization=False, obj_name="MSE",
-                            optim="BaseGA", optim_paras=opt_paras, verbose=True, seed=42)
+                            optim="BaseGA", optim_params=opt_paras, verbose=True, seed=42)
 
     ## Train the model
     model.fit(data.X_train, data.y_train)

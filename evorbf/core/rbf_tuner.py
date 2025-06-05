@@ -120,14 +120,14 @@ class NiaRbfTuner:
         bounds (list of tuples): The search space for hyperparameters.
         cv (int): The number of folds in cross-validation.
         verbose (str): Level of verbosity for the optimization process.
-        optim_paras (dict or None): Parameters for the optimization algorithm.
+        optim_params (dict or None): Parameters for the optimization algorithm.
         optimizer (Optimizer): The optimization algorithm used for tuning hyperparameters.
         best_params (dict or None): The best hyperparameters found.
         best_estimator (object or None): The trained model with the best hyperparameters.
         loss_train (list or None): The training loss history during the optimization process.
 
     Methods:
-        _set_optim(optim, optim_paras):
+        _set_optim(optim, optim_params):
             Initializes and returns the optimizer instance based on the provided algorithm name and parameters.
         fit(X, y):
             Fits the model to the training data and optimizes the hyperparameters using the specified optimizer.
@@ -139,7 +139,7 @@ class NiaRbfTuner:
     SUPPORTED_REG_METRICS = get_all_regression_metrics()
 
     def __init__(self, problem_type="regression", bounds=None, cv=5, scoring="MSE",
-                 optim="OriginalWOA", optim_paras=None, verbose=True, seed=None):
+                 optim="OriginalWOA", optim_params=None, verbose=True, seed=None):
         """
         Initializes the NiaRbfTuner with the specified parameters and settings.
 
@@ -149,7 +149,7 @@ class NiaRbfTuner:
             cv (int): The number of folds for cross-validation (default is 5).
             scoring (str): The metric used for evaluating the model's performance (default is "MSE").
             optim (str): The name of the optimization algorithm (default is "OriginalWOA").
-            optim_paras (dict or None): Parameters for the optimization algorithm (default is None).
+            optim_params (dict or None): Parameters for the optimization algorithm (default is None).
             verbose (bool): If True, displays console output during optimization (default is True).
             seed (int or None): Random seed for reproducibility (default is None).
         """
@@ -168,19 +168,19 @@ class NiaRbfTuner:
         self.bounds = bounds
         self.cv = cv
         self.verbose = "console" if verbose else "None"
-        self.optim_paras = optim_paras
-        self.optimizer = self._set_optim(optim, optim_paras)
+        self.optim_params = optim_params
+        self.optimizer = self._set_optim(optim, optim_params)
         self.best_params = None
         self.best_estimator = None
         self.loss_train = None
 
-    def _set_optim(self, optim=None, optim_paras=None):
+    def _set_optim(self, optim=None, optim_params=None):
         """
         Sets up the optimizer instance based on the algorithm name and parameters.
 
         Parameters:
             optim (str or Optimizer): The name of the optimizer as a string or an instance of an optimizer.
-            optim_paras (dict): Parameters for the optimizer.
+            optim_params (dict): Parameters for the optimizer.
 
         Returns:
             Optimizer: An initialized optimizer instance.
@@ -190,13 +190,13 @@ class NiaRbfTuner:
         """
         if type(optim) is str:
             opt_class = get_optimizer_by_class(optim)
-            if type(optim_paras) is dict:
-                return opt_class(**optim_paras)
+            if type(optim_params) is dict:
+                return opt_class(**optim_params)
             else:
                 return opt_class(epoch=500, pop_size=50)
         elif isinstance(optim, Optimizer):
-            if type(optim_paras) is dict:
-                return optim.set_parameters(optim_paras)
+            if type(optim_params) is dict:
+                return optim.set_parameters(optim_params)
             return optim
         else:
             raise TypeError(f"optim needs to set as a string and supported by Mealpy library.")

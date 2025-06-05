@@ -41,7 +41,7 @@ class NiaRbfRegressor(BaseNiaRbf, RegressorMixin):
         The Metaheuristic Algorithm that use to solve the feature selection problem.
         Current supported list, please check it here: https://github.com/thieu1995/mealpy.
         If a custom optimizer is passed, make sure it is an instance of `Optimizer` class.
-    optim_paras : None or dict of parameter, default=None
+    optim_params : None or dict of parameter, default=None
         The parameter for the `optimizer` object.
         If `None`, the default parameters of optimizer is used (defined in https://github.com/thieu1995/mealpy.)
         If `dict` is passed, make sure it has at least `epoch` and `pop_size` parameters.
@@ -88,7 +88,7 @@ class NiaRbfRegressor(BaseNiaRbf, RegressorMixin):
     >>> data.split_train_test(test_size=0.2, random_state=1)
     >>> opt_paras = {"name": "GA", "epoch": 10, "pop_size": 30}
     >>> model = NiaRbfRegressor(size_hidden=10, center_finder="kmeans", regularization=False,
-    >>>         obj_name=None, optim="BaseGA", optim_paras=opt_paras, verbose=True, seed=42, obj_weights=None)
+    >>>         obj_name=None, optim="BaseGA", optim_params=opt_paras, verbose=True, seed=42, obj_weights=None)
     >>> model.fit(data.X_train, data.y_train)
     >>> pred = model.predict(data.X_test)
     >>> print(pred)
@@ -102,9 +102,9 @@ class NiaRbfRegressor(BaseNiaRbf, RegressorMixin):
     """
 
     def __init__(self, size_hidden=10, center_finder="kmeans", regularization=False,
-                 obj_name=None, optim="BaseGA", optim_paras=None, verbose=True, seed=None, obj_weights=None):
+                 obj_name=None, optim="BaseGA", optim_params=None, verbose=True, seed=None, obj_weights=None):
         super().__init__(size_hidden=size_hidden, center_finder=center_finder, regularization=regularization,
-                         obj_name=obj_name, optim=optim, optim_paras=optim_paras, verbose=verbose, seed=seed)
+                         obj_name=obj_name, optim=optim, optim_params=optim_params, verbose=verbose, seed=seed)
         self.obj_weights = obj_weights
 
     def create_network(self, X, y):
@@ -239,7 +239,7 @@ class NiaRbfClassifier(BaseNiaRbf, ClassifierMixin):
         The Metaheuristic Algorithm that use to solve the feature selection problem.
         Current supported list, please check it here: https://github.com/thieu1995/mealpy.
         If a custom optimizer is passed, make sure it is an instance of `Optimizer` class.
-    optim_paras : None or dict of parameter, default=None
+    optim_params : None or dict of parameter, default=None
         The parameter for the `optimizer` object.
         If `None`, the default parameters of optimizer is used (defined in https://github.com/thieu1995/mealpy.)
         If `dict` is passed, make sure it has at least `epoch` and `pop_size` parameters.
@@ -258,7 +258,7 @@ class NiaRbfClassifier(BaseNiaRbf, ClassifierMixin):
     >>> opt_paras = {"name": "WOA", "epoch": 100, "pop_size": 30}
     >>> print(NiaRbfClassifier.SUPPORTED_CLS_OBJECTIVES)
     >>> model = NiaRbfClassifier(size_hidden=25, center_finder="kmeans", regularization=False, obj_name="AS",
-    >>>             optim="OriginalWOA", optim_paras=opt_paras, verbose=True, seed=42)
+    >>>             optim="OriginalWOA", optim_params=opt_paras, verbose=True, seed=42)
     >>> model.fit(data.X_train, data.y_train)
     >>> pred = model.predict(data.X_test)
     >>> print(pred)
@@ -268,9 +268,9 @@ class NiaRbfClassifier(BaseNiaRbf, ClassifierMixin):
     CLS_OBJ_LOSSES = ["CEL", "HL", "KLDL", "BSL"]
 
     def __init__(self, size_hidden=10, center_finder="kmeans", regularization=False,
-                 obj_name=None, optim="BaseGA", optim_paras=None, verbose=True, seed=None, obj_weights=None):
+                 obj_name=None, optim="BaseGA", optim_params=None, verbose=True, seed=None, obj_weights=None):
         super().__init__(size_hidden=size_hidden, center_finder=center_finder, regularization=regularization,
-                         obj_name=obj_name, optim=optim, optim_paras=optim_paras, verbose=verbose, seed=seed)
+                         obj_name=obj_name, optim=optim, optim_params=optim_params, verbose=verbose, seed=seed)
         self.return_prob = False
         self.n_labels = None
         self.obj_weights = obj_weights

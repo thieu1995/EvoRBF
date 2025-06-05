@@ -28,7 +28,7 @@ data.y_test = scaler_y.transform(data.y_test)
 opt_paras = {"name": "WOA", "epoch": 50, "pop_size": 20}
 print(NiaRbfClassifier.SUPPORTED_CLS_OBJECTIVES)
 model = NiaRbfClassifier(size_hidden=25, center_finder="kmeans", regularization=False, obj_name="F1S",
-                        optim="OriginalWOA", optim_paras=opt_paras, verbose=True, seed=42)
+                        optim="OriginalWOA", optim_params=opt_paras, verbose=True, seed=42)
 ## Train the model
 model.fit(X=data.X_train, y=data.y_train)
 

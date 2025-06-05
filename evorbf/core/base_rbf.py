@@ -355,7 +355,7 @@ class BaseNiaRbf(BaseRbf):
         Current supported list, please check it here: https://github.com/thieu1995/mealpy.
         If a custom optimizer is passed, make sure it is an instance of `Optimizer` class.
 
-    optim_paras : None or dict of parameter, default=None
+    optim_params : None or dict of parameter, default=None
         The parameter for the `optimizer` object.
         If `None`, the default parameters of optimizer is used (defined in https://github.com/thieu1995/mealpy.)
         If `dict` is passed, make sure it has at least `epoch` and `pop_size` parameters.
@@ -377,25 +377,32 @@ class BaseNiaRbf(BaseRbf):
     SUPPORTED_REG_OBJECTIVES = get_all_regression_metrics()
 
     def __init__(self, size_hidden=10, center_finder="kmeans", regularization=True,
-                 obj_name=None, optim="BaseGA", optim_paras=None, verbose=True, seed=None):
+                 obj_name=None, optim="BaseGA", optim_params=None, verbose=True, seed=None,
+                 lb=None, ub=None, mode='single', n_workers=None, termination=None):
         super().__init__(size_hidden=size_hidden, center_finder=center_finder, seed=seed)
         self.regularization = regularization
         self.obj_name = obj_name
-        self.optim_paras = optim_paras
-        self.optimizer = self._set_optimizer(optim, optim_paras)
+        self.optim_params = optim_params
+        self.optim = optim
+        self.lb = lb
+        self.ub = ub
+        self.mode = mode
+        self.n_workers = n_workers
+        self.termination = termination
+        # self.optimizer = self._set_optimizer(optim, optim_params)
         self.verbose = verbose
-        self.network, self.obj_scaler, self.obj_weights = None, None, None
+        self.network, self.obj_scaler, self.obj_weights, self.loss_train = None, None, None, None
 
-    def _set_optimizer(self, optim=None, optim_paras=None):
+    def _set_optimizer(self, optim=None, optim_params=None):
         if type(optim) is str:
             opt_class = get_optimizer_by_class(optim)
-            if type(optim_paras) is dict:
-                return opt_class(**optim_paras)
+            if type(optim_params) is dict:
+                return opt_class(**optim_params)
             else:
                 return opt_class(epoch=500, pop_size=50)
         elif isinstance(optim, Optimizer):
-            if type(optim_paras) is dict:
-                return optim.set_parameters(optim_paras)
+            if type(optim_params) is dict:
+                return optim.set_parameters(optim_params)
             return optim
         else:
             raise TypeError(f"optimizer needs to set as a string and supported by Mealpy library.")

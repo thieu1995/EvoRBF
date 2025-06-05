@@ -19,13 +19,13 @@ def sample_data():
 def test_initialization():
     # Test that the class initializes correctly with default parameters
     model = NiaRbfRegressor(size_hidden=10, center_finder="kmeans", regularization=True,
-                            optim="BaseGA", optim_paras={"epoch": 10, "pop_size": 30}, verbose=True, seed=42)
+                            optim="BaseGA", optim_params={"epoch": 10, "pop_size": 30}, verbose=True, seed=42)
 
     assert model.size_hidden == 10
     assert model.center_finder == "kmeans"
     assert model.regularization is True
     assert model.optimizer.name == "BaseGA"
-    assert model.optim_paras == {"epoch": 10, "pop_size": 30}
+    assert model.optim_params == {"epoch": 10, "pop_size": 30}
     assert model.verbose is True
     assert model.seed == 42
 
@@ -33,7 +33,7 @@ def test_initialization():
 def test_fit_predict(sample_data):
     X, y = sample_data
     model = NiaRbfRegressor(size_hidden=10, center_finder="kmeans", regularization=False, obj_name="MSE",
-                            optim="BaseGA", optim_paras={"epoch": 10, "pop_size": 30}, verbose=True, seed=42)
+                            optim="BaseGA", optim_params={"epoch": 10, "pop_size": 30}, verbose=True, seed=42)
 
     # Fit the model
     model.fit(X, y)
@@ -46,7 +46,7 @@ def test_fit_predict(sample_data):
 def test_score(sample_data):
     X, y = sample_data
     model = NiaRbfRegressor(size_hidden=10, center_finder="kmeans", regularization=False, obj_name="MSE",
-                            optim="BaseGA", optim_paras={"epoch": 10, "pop_size": 30}, verbose=True, seed=42)
+                            optim="BaseGA", optim_params={"epoch": 10, "pop_size": 30}, verbose=True, seed=42)
 
     # Fit the model
     model.fit(X, y)
@@ -60,7 +60,7 @@ def test_score(sample_data):
 def test_scores(sample_data):
     X, y = sample_data
     model = NiaRbfRegressor(size_hidden=10, center_finder="kmeans", regularization=False, obj_name="MSE",
-                            optim="BaseGA", optim_paras={"epoch": 10, "pop_size": 30}, verbose=True, seed=42)
+                            optim="BaseGA", optim_params={"epoch": 10, "pop_size": 30}, verbose=True, seed=42)
 
     # Fit the model
     model.fit(X, y)
@@ -75,7 +75,7 @@ def test_scores(sample_data):
 def test_evaluate(sample_data):
     X, y = sample_data
     model = NiaRbfRegressor(size_hidden=10, center_finder="kmeans", regularization=False, obj_name="MSE",
-                            optim="BaseGA", optim_paras={"epoch": 10, "pop_size": 30}, verbose=True, seed=42)
+                            optim="BaseGA", optim_params={"epoch": 10, "pop_size": 30}, verbose=True, seed=42)
 
     # Fit the model
     model.fit(X, y)
