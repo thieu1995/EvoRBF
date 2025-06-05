@@ -59,8 +59,9 @@ class HyperparameterProblem(Problem):
             seed (int): The seed for random number generation to ensure reproducibility.
             **kwargs: Additional keyword arguments passed to the parent class's initializer.
         """
+        super().__init__(bounds, minmax, **kwargs)
         self.model_class = model_class
-        self.model = None
+        self.model =None
         self.X = X
         self.y = y
         self.metric_class = metric_class
@@ -68,7 +69,6 @@ class HyperparameterProblem(Problem):
         self.cv = cv
         self.seed = seed
         self.kf = KFold(n_splits=cv, shuffle=True, random_state=self.seed)
-        super().__init__(bounds, minmax, **kwargs)
 
     def obj_func(self, x):
         """
@@ -125,6 +125,9 @@ class NiaRbfTuner:
         best_params (dict or None): The best hyperparameters found.
         best_estimator (object or None): The trained model with the best hyperparameters.
         loss_train (list or None): The training loss history during the optimization process.
+        mode (str, optional) : Mode for optimization (default is 'single').
+        n_workers (int, optional): Number of workers for parallel processing (default is None).
+        termination (any, optional): Termination criteria for optimization (default is None).
 
     Methods:
         _set_optim(optim, optim_params):
@@ -139,7 +142,8 @@ class NiaRbfTuner:
     SUPPORTED_REG_METRICS = get_all_regression_metrics()
 
     def __init__(self, problem_type="regression", bounds=None, cv=5, scoring="MSE",
-                 optim="OriginalWOA", optim_params=None, verbose=True, seed=None):
+                 optim="OriginalWOA", optim_params=None, verbose=True, seed=None,
+                 mode='single', n_workers=None, termination=None):
         """
         Initializes the NiaRbfTuner with the specified parameters and settings.
 
@@ -152,6 +156,9 @@ class NiaRbfTuner:
             optim_params (dict or None): Parameters for the optimization algorithm (default is None).
             verbose (bool): If True, displays console output during optimization (default is True).
             seed (int or None): Random seed for reproducibility (default is None).
+            mode (str, optional) : Mode for optimization (default is 'single').
+            n_workers (int, optional): Number of workers for parallel processing (default is None).
+            termination (any, optional): Termination criteria for optimization (default is None).
         """
         if problem_type == "regression":
             self.network_class = RbfRegressor
@@ -167,11 +174,17 @@ class NiaRbfTuner:
         self.problem_type = problem_type
         self.bounds = bounds
         self.cv = cv
-        self.verbose = "console" if verbose else "None"
+        self.verbose = verbose
         self.optim_params = optim_params
-        self.optimizer = self._set_optim(optim, optim_params)
+        self.optim = optim
+        self.mode = mode
+        self.n_workers = n_workers
+        self.termination = termination
+
+        self.optimizer = None
         self.best_params = None
         self.best_estimator = None
+        self.best_score = None
         self.loss_train = None
 
     def _set_optim(self, optim=None, optim_params=None):
@@ -188,18 +201,20 @@ class NiaRbfTuner:
         Raises:
             TypeError: If `optim` is neither a string nor an `Optimizer` instance.
         """
-        if type(optim) is str:
+        if isinstance(optim, str):
             opt_class = get_optimizer_by_class(optim)
-            if type(optim_params) is dict:
+            if isinstance(optim_params, dict):
                 return opt_class(**optim_params)
             else:
-                return opt_class(epoch=500, pop_size=50)
+                return opt_class(epoch=250, pop_size=20)
         elif isinstance(optim, Optimizer):
-            if type(optim_params) is dict:
-                return optim.set_parameters(optim_params)
+            if isinstance(optim_params, dict):
+                if "name" in optim_params:  # Check if key exists and remove it
+                    optim.name = optim_params.pop("name")
+                optim.set_parameters(optim_params)
             return optim
         else:
-            raise TypeError(f"optim needs to set as a string and supported by Mealpy library.")
+            raise TypeError(f"`optim` needs to set as a string and supported by Mealpy library.")
 
     def fit(self, X, y):
         """
@@ -212,10 +227,14 @@ class NiaRbfTuner:
         Returns:
             self: The instance of the fitted `NiaRbfTuner` with optimized hyperparameters.
         """
+        log_to = "console" if self.verbose else "None"
+        self.optim_params = self.optim_params or {}
+        self.optimizer = self._set_optim(self.optim, self.optim_params)
         self.problem = HyperparameterProblem(self.bounds, self.minmax, X, y,
                                              self.network_class, self.metric_class,
-                                             obj_name=self.scoring, cv=self.cv, log_to=self.verbose)
-        self.optimizer.solve(self.problem, seed=self.seed)
+                                             obj_name=self.scoring, cv=self.cv, log_to=log_to)
+        self.optimizer.solve(self.problem, mode=self.mode, n_workers=self.n_workers,
+                             termination=self.termination, seed=self.seed)
         self.best_params = self.optimizer.problem.decode_solution(self.optimizer.g_best.solution)
         self.best_estimator = self.network_class(**{**self.best_params, "seed": self.seed})
         self.best_estimator.fit(X, y)
