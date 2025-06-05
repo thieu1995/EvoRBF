@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from sklearn.model_selection import KFold
-from mealpy import Problem, get_optimizer_by_name, Optimizer
+from mealpy import Problem, get_optimizer_by_class, Optimizer
 from permetrics import ClassificationMetric, RegressionMetric
 from evorbf.helpers.metrics import get_all_classification_metrics, get_all_regression_metrics
 from evorbf.helpers import validator
@@ -189,7 +189,7 @@ class NiaRbfTuner:
             TypeError: If `optim` is neither a string nor an `Optimizer` instance.
         """
         if type(optim) is str:
-            opt_class = get_optimizer_by_name(optim)
+            opt_class = get_optimizer_by_class(optim)
             if type(optim_paras) is dict:
                 return opt_class(**optim_paras)
             else:

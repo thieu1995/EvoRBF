@@ -10,7 +10,7 @@ import pandas as pd
 from pathlib import Path
 from permetrics import RegressionMetric, ClassificationMetric
 from sklearn.base import BaseEstimator
-from mealpy import get_optimizer_by_name, Optimizer, get_all_optimizers, FloatVar
+from mealpy import get_optimizer_by_class, Optimizer, get_all_optimizers, FloatVar
 from sklearn.cluster import KMeans
 from evorbf.helpers import validator
 from evorbf.helpers.metrics import get_all_regression_metrics, get_all_classification_metrics
@@ -372,7 +372,7 @@ class BaseNiaRbf(BaseRbf):
     - Metrics can be customized using the Permetrics library: https://github.com/thieu1995/permetrics
     """
 
-    SUPPORTED_OPTIMIZERS = list(get_all_optimizers().keys())
+    SUPPORTED_OPTIMIZERS = list(get_all_optimizers(verbose=False).keys())
     SUPPORTED_CLS_OBJECTIVES = get_all_classification_metrics()
     SUPPORTED_REG_OBJECTIVES = get_all_regression_metrics()
 
@@ -388,7 +388,7 @@ class BaseNiaRbf(BaseRbf):
 
     def _set_optimizer(self, optim=None, optim_paras=None):
         if type(optim) is str:
-            opt_class = get_optimizer_by_name(optim)
+            opt_class = get_optimizer_by_class(optim)
             if type(optim_paras) is dict:
                 return opt_class(**optim_paras)
             else:
