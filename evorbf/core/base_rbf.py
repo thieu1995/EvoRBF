@@ -3,7 +3,7 @@
 #       Email: nguyenthieu2102@gmail.com            %                                                    
 #       Github: https://github.com/thieu1995        %                         
 # --------------------------------------------------%
-
+import numbers
 import pickle
 import numpy as np
 import pandas as pd
@@ -366,6 +366,21 @@ class BaseNiaRbf(BaseRbf):
     seed : int, default=None
         The seed value is used for reproducibility.
 
+    lb : int, float, tuple, list, np.ndarray, optional
+        Lower bounds for sigmas in network.
+
+    ub : int, float, tuple, list, np.ndarray, optional
+        Upper bounds for sigmas in network.
+
+    mode : str, optional
+        Mode for optimizer (default is 'single').
+
+    n_workers : int, optional
+        Number of workers for parallel processing in optimizer (default is None).
+
+    termination : any, optional
+        Termination criteria for optimizer (default is None).
+
     Notes
     -----
     - This class is designed to be easily extended for hybrid metaheuristic-based RBF models.
@@ -389,57 +404,107 @@ class BaseNiaRbf(BaseRbf):
         self.mode = mode
         self.n_workers = n_workers
         self.termination = termination
-        # self.optimizer = self._set_optimizer(optim, optim_params)
         self.verbose = verbose
-        self.network, self.obj_scaler, self.obj_weights, self.loss_train = None, None, None, None
+        self.network, self.obj_scaler, self.loss_train, self.optimizer = None, None, None, None
 
     def _set_optimizer(self, optim=None, optim_params=None):
-        if type(optim) is str:
+        """
+        Validates the real optimizer based on the provided `optim` and `optim_pras`.
+
+        Parameters
+        ----------
+        optim : str or Optimizer
+            The optimizer name or instance to be set.
+        optim_params : dict, optional
+            Parameters to configure the optimizer.
+
+        Returns
+        -------
+        Optimizer
+            An instance of the selected optimizer.
+
+        Raises
+        ------
+        TypeError
+            If the provided optimizer is neither a string nor an instance of Optimizer.
+        """
+        if isinstance(optim, str):
             opt_class = get_optimizer_by_class(optim)
-            if type(optim_params) is dict:
+            if isinstance(optim_params, dict):
                 return opt_class(**optim_params)
             else:
-                return opt_class(epoch=500, pop_size=50)
+                return opt_class(epoch=500, pop_size=30)
         elif isinstance(optim, Optimizer):
-            if type(optim_params) is dict:
-                return optim.set_parameters(optim_params)
+            if isinstance(optim_params, dict):
+                if "name" in optim_params:  # Check if key exists and remove it
+                    optim.name = optim_params.pop("name")
+                optim.set_parameters(optim_params)
             return optim
         else:
             raise TypeError(f"optimizer needs to set as a string and supported by Mealpy library.")
 
-    def _get_history_loss(self, optim=None):
-        list_global_best = optim.history.list_global_best
-        # 2D array / matrix 2D
-        return np.array([agent.target.fitness for agent in list_global_best])
+    def _set_lb_ub(self, lb=None, ub=None, n_dims=None, lb_default=None, ub_default=None):
+        """
+        Validates and sets the lower and upper bounds for optimization.
+
+        Parameters
+        ----------
+        lb : list, tuple, np.ndarray, int, or float, optional
+            The lower bounds for sigmas in network.
+        ub : list, tuple, np.ndarray, int, or float, optional
+            The upper bounds for sigmas in network.
+        n_dims : int
+            The number of dimensions.
+
+        Returns
+        -------
+        tuple
+            A tuple containing validated lower and upper bounds.
+
+        Raises
+        ------
+        ValueError
+            If the bounds are not valid.
+        """
+        if lb is None:
+            lb = (lb_default,) * n_dims
+        elif isinstance(lb, numbers.Number):
+            lb = (lb, ) * n_dims
+        elif isinstance(lb, (list, tuple, np.ndarray)):
+            if len(lb) == 1:
+                lb = np.array(lb * n_dims, dtype=float)
+            else:
+                lb = np.array(lb, dtype=float).ravel()
+
+        if ub is None:
+            ub = (ub_default,) * n_dims
+        elif isinstance(ub, numbers.Number):
+            ub = (ub, ) * n_dims
+        elif isinstance(ub, (list, tuple, np.ndarray)):
+            if len(ub) == 1:
+                ub = np.array(ub * n_dims, dtype=float)
+            else:
+                ub = np.array(ub, dtype=float).ravel()
+
+        if len(lb) != len(ub):
+            raise ValueError(f"Invalid lb and ub. Their length should be equal to 1 or {n_dims}.")
+
+        return np.array(lb).ravel(), np.array(ub).ravel()
 
     def objective_function(self, solution=None):
         pass
 
-    def fit(self, X, y, lb=None, ub=None, save_population=False):
+    def fit(self, X, y):
         self.network, self.obj_scaler = self.create_network(X, y)
         y_scaled = self.obj_scaler.transform(y)
         self.X_temp, self.y_temp = X, y_scaled
+        self.optimizer = self._set_optimizer(self.optim, self.optim_params)
         if self.regularization:
-            problem_size = self.size_hidden + 1
+            n_dims = self.size_hidden + 1
         else:
-            problem_size = self.size_hidden
-        if lb is None or ub is None:
-            ub = [np.mean(np.max(X, axis=0)), ] * problem_size
-            lb = [0.001, ] * problem_size
-        elif type(lb) in (list, tuple, np.ndarray) and type(ub) in (list, tuple, np.ndarray):
-            if len(lb) == len(ub):
-                if len(lb) == 1:
-                    lb = lb * problem_size
-                    ub = ub * problem_size
-                elif len(lb) != problem_size:
-                    raise ValueError(f"Invalid lb and ub. Their length should equal to 1 or {problem_size}.")
-            else:
-                raise ValueError(f"Invalid lb and ub. They should have the same length.")
-        elif type(lb) in (int, float) and type(ub) in (int, float):
-            lb = [lb, ] * problem_size
-            ub = [ub, ] * problem_size
-        else:
-            raise ValueError(f"Invalid lb and ub. They should be a number of list/tuple/np.ndarray with size equal to problem_size")
+            n_dims = self.size_hidden
+        lb, ub = self._set_lb_ub(self.lb, self.ub, n_dims, lb_default=1e-6, ub_default=np.mean(np.max(X, axis=0)))
+
         log_to = "console" if self.verbose else "None"
         if self.obj_name is None:
             raise ValueError("obj_name can't be None")
@@ -455,10 +520,8 @@ class BaseNiaRbf(BaseRbf):
             "bounds": FloatVar(lb=lb, ub=ub),
             "minmax": minmax,
             "log_to": log_to,
-            "save_population": save_population,
-            "obj_weights": self.obj_weights
         }
-        self.optimizer.solve(problem, seed=self.seed)
+        self.optimizer.solve(problem, seed=self.seed, mode=self.mode, n_workers=self.n_workers, termination=self.termination)
         self.network.update_weights_from_solution(self.optimizer.g_best.solution, X, y_scaled)
-        self.loss_train = self._get_history_loss(optim=self.optimizer)
+        self.loss_train = np.array(self.optimizer.history.list_global_best_fit)
         return self
