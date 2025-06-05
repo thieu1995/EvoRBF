@@ -29,7 +29,8 @@ data.y_test = scaler_y.transform(np.reshape(data.y_test, (-1, 1)))
 
 opt_paras = {"name": "WOA", "epoch": 50, "pop_size": 20}
 model = NiaRbfRegressor(size_hidden=25, center_finder="kmeans", regularization=False, obj_name="MSE",
-                        optim="BaseGA", optim_params=opt_paras, verbose=True, seed=42)
+                        optim="BaseGA", optim_params=opt_paras, verbose=True, seed=42,
+                        lb=None, ub=None, mode='single', n_workers=None, termination=None)
 ## Train the model
 model.fit(data.X_train, data.y_train)
 

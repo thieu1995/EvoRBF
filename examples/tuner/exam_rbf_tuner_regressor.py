@@ -34,7 +34,8 @@ my_bounds = [
 
 opt_paras = {"name": "WOA", "epoch": 10, "pop_size": 20}
 model = NiaRbfTuner(problem_type="regression", bounds=my_bounds, cv=3, scoring="MSE",
-                    optim="OriginalWOA", optim_params=opt_paras, verbose=True, seed=42)
+                    optim="OriginalWOA", optim_params=opt_paras, verbose=True, seed=42,
+                    mode='single', n_workers=None, termination=None)
 
 model.fit(data.X_train, data.y_train)
 print(model.best_params)
